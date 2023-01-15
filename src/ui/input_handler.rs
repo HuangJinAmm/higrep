@@ -6,8 +6,10 @@ use std::time::Duration;
 #[derive(Default)]
 pub struct InputHandler {
     input_buffer: String,
+    input_search_history: InputSearchHistory,
     input_state: InputState,
 }
+
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum InputState {
@@ -43,74 +45,154 @@ impl InputHandler {
 
     fn handle_char_input<A: Application>(&mut self, character: char, app: &mut A) {
         self.input_buffer.push(character);
-        self.input_state = InputState::Valid;
-
         let consume_buffer_and_execute = |buffer: &mut String, op: &mut dyn FnMut()| {
             buffer.clear();
             op();
         };
 
-        match self.input_buffer.as_str() {
-            "j" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_next_match()),
-            "k" => {
-                consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_previous_match())
-            }
-            "l" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_next_file()),
-            "h" => {
-                consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_previous_file())
-            }
-            "gg" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_top()),
-            "G" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_bottom()),
-            "dd" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
-                app.on_remove_current_entry()
-            }),
-            "dw" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
-                app.on_remove_current_file()
-            }),
-            "v" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
-                app.on_toggle_context_viewer_vertical()
-            }),
-            "s" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
-                app.on_toggle_context_viewer_horizontal()
-            }),
-            "q" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_exit()),
-            "g" => self.input_state = InputState::Incomplete("g…".into()),
-            "d" => self.input_state = InputState::Incomplete("d…".into()),
-            buf => {
-                self.input_state = InputState::Invalid(buf.into());
-                self.input_buffer.clear();
+        if app.is_input_searching() {
+            self.input_state = InputState::Incomplete(self.input_buffer.clone());
+        } else {
+            self.input_state = InputState::Valid;
+            match self.input_buffer.as_str() {
+                "j" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_next_match()),
+                "k" => {
+                    consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_previous_match())
+                }
+                "l" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_next_file()),
+                "h" => {
+                    consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_previous_file())
+                }
+                "gg" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_top()),
+                "G" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_bottom()),
+                "dd" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                    app.on_remove_current_entry()
+                }),
+                "dw" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                    app.on_remove_current_file()
+                }),
+                "v" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                    app.on_toggle_context_viewer_vertical()
+                }),
+                "s" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                    app.on_toggle_context_viewer_horizontal()
+                }),
+                "q" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_exit()),
+                "g" => self.input_state = InputState::Incomplete("g…".into()),
+                "d" => self.input_state = InputState::Incomplete("d…".into()),
+                buf => {
+                    self.input_state = InputState::Invalid(buf.into());
+                    self.input_buffer.clear();
+                }
             }
         }
+
     }
 
     fn handle_non_char_input<A: Application>(&mut self, key_code: KeyCode, app: &mut A) {
-        self.input_buffer.clear();
-
-        match key_code {
-            KeyCode::Down => app.on_next_match(),
-            KeyCode::Up => app.on_previous_match(),
-            KeyCode::Right | KeyCode::PageDown => app.on_next_file(),
-            KeyCode::Left | KeyCode::PageUp => app.on_previous_file(),
-            KeyCode::Home => app.on_top(),
-            KeyCode::End => app.on_bottom(),
-            KeyCode::Delete => app.on_remove_current_entry(),
-            KeyCode::Enter => app.on_open_file(),
-            KeyCode::F(5) => app.on_search(),
-            KeyCode::Esc => {
-                if matches!(self.input_state, InputState::Valid)
-                    || matches!(self.input_state, InputState::Invalid(_))
-                {
-                    app.on_exit();
-                }
+        if app.is_input_searching() {
+            match key_code {
+                KeyCode::Enter => {
+                    self.input_search_history.push(self.input_buffer.clone());
+                    self.input_state = InputState::Valid;
+                    app.on_search();
+                },
+                KeyCode::Down => {
+                    let history = self.input_search_history.next();
+                    self.input_buffer = history.to_owned();
+                    self.input_state = InputState::Incomplete(self.input_buffer.clone());
+                },
+                KeyCode::Up => {
+                    let history = self.input_search_history.pre();
+                    self.input_buffer = history.to_owned();
+                    self.input_state = InputState::Incomplete(self.input_buffer.clone());
+                },
+                KeyCode::Backspace => {
+                    let _ =  self.input_buffer.pop();
+                    self.input_state = InputState::Incomplete(self.input_buffer.clone());
+                },
+                _ => ()
             }
-            _ => (),
+        } else {
+            self.input_buffer.clear();
+            self.input_state = InputState::Valid;
+            match key_code {
+                KeyCode::Down => app.on_next_match(),
+                KeyCode::Up => app.on_previous_match(),
+                KeyCode::Right | KeyCode::PageDown => app.on_next_file(),
+                KeyCode::Left | KeyCode::PageUp => app.on_previous_file(),
+                KeyCode::Home => app.on_top(),
+                KeyCode::End => app.on_bottom(),
+                KeyCode::Delete => app.on_remove_current_entry(),
+                KeyCode::Enter => {
+                        app.on_open_file();
+                },
+                KeyCode::F(5) => app.on_search(),
+                KeyCode::F(1) => app.on_show_help(),
+                KeyCode::F(2) => {
+                    self.input_state = InputState::Incomplete(self.input_buffer.clone());
+                    app.on_input_search();
+                },
+                KeyCode::Esc => {
+                    if matches!(self.input_state, InputState::Valid)
+                        || matches!(self.input_state, InputState::Invalid(_))
+                    {
+                        app.on_exit();
+                    }
+                }
+                _ => (),
+            }
         }
-
-        self.input_state = InputState::Valid;
     }
 
     pub fn get_state(&self) -> &InputState {
         &self.input_state
+    }
+}
+
+pub struct InputSearchHistory {
+    history:Vec<String>,
+    curse:usize,
+}
+
+impl Default for InputSearchHistory{
+    fn default() -> Self {
+        Self {
+            history:vec!["没有记录了".to_owned(),],
+            curse:0,
+        }
+    }
+}
+
+impl InputSearchHistory {
+
+    pub fn push(&mut self,record:String) {
+        if !self.history.contains(&record) {
+            self.history.insert(0,record);
+        } else {
+            let pos = self.history.binary_search(&record).unwrap();
+            let select = self.history.remove(pos);
+            self.history.insert(0, select);
+        }
+    }
+
+    pub fn get(&self) -> &str {
+        self.history.get(self.curse).unwrap()
+    }
+
+    pub fn pre(&mut self) -> &str{
+        if self.curse > 0 {
+            self.curse -= 1;
+        }
+        self.get()
+    }
+
+    pub fn next(&mut self) -> &str{
+        let len = self.history.len();
+        if self.curse < len - 1 {
+            self.curse += 1;
+        }
+        self.get()
     }
 }
 

@@ -57,6 +57,8 @@ impl SearcherImpl {
             .line_terminator(LineTerminator::byte(b'\n'))
             .line_number(true)
             .multi_line(false)
+            .after_context(3)
+            .before_context(4)
             .build();
 
         let matcher = RegexMatcherBuilder::new()

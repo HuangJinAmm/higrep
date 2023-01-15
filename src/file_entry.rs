@@ -2,7 +2,7 @@ use crate::grep_match::GrepMatch;
 
 pub enum EntryType {
     Header(String),
-    Match(u64, String, Vec<(usize, usize)>),
+    Match(u64, String, Option<Vec<(usize, usize)>>),
 }
 
 pub struct FileEntry(Vec<EntryType>);
