@@ -57,11 +57,21 @@ where
             _searcher: &Searcher,
             context: &grep::searcher::SinkContext<'_>,
         ) -> Result<bool, Self::Error> {
-        let line_num = context.line_number().ok_or(std::io::ErrorKind::InvalidData)?;
-        let text = std::str::from_utf8(context.bytes());
-        if let Ok(t) = text {
-            self.matches_in_entry.push(GrepMatch::new(line_num, t.into(), None));
-        }
-        Ok(true)
+            let line_num = context.line_number().ok_or(std::io::ErrorKind::InvalidData)?;
+            let text = std::str::from_utf8(context.bytes());
+            if let Ok(t) = text {
+                self.matches_in_entry.push(GrepMatch::new(line_num, t.into(), None));
+            }
+            Ok(true)
+    }
+
+    fn context_break(
+            &mut self,
+            _searcher: &Searcher,
+        ) -> Result<bool, Self::Error> {
+            let line_num = 0;
+            let text = vec!["-";100].join("-");
+            self.matches_in_entry.push(GrepMatch::new(line_num, text, None));
+            Ok(true)
     }
 }

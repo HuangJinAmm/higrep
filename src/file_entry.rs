@@ -14,7 +14,15 @@ impl FileEntry {
                 .chain(
                     matches
                         .into_iter()
-                        .map(|m| EntryType::Match(m.line_number, m.text, m.match_offsets)),
+                        .map(|m| {
+
+                            let text = vec!["-";100].join("-");
+                            if m.text == text {
+                                EntryType::Header(text)
+                            } else {
+                                EntryType::Match(m.line_number, m.text, m.match_offsets)
+                            }
+                        }),
                 )
                 .collect(),
         )
