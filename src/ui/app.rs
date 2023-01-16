@@ -4,7 +4,7 @@ use super::{
     input_handler::{InputHandler, InputState},
     result_list::ResultList,
     scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
-    theme::Theme,
+    theme::Theme, cmd_parse::SearchCmd,
 };
 
 use crate::{
@@ -340,7 +340,7 @@ fn draw_bottom_bar_normal(app: &mut App, input_handler: &InputHandler, area: Rec
             let no_of_files = app.result_list.get_total_number_of_file_entries();
 
             let matches_str = "匹配";
-            let files_str = "个文件";
+            let files_str = "文件";
 
             let filtered_count = app.result_list.get_filtered_matches_count();
             let filtered_str = if filtered_count != 0 {
@@ -507,10 +507,14 @@ impl Application for App {
         self.bottom_bar_state == BottomBarState::Input
     }
 
+    fn update_cmd(&mut self,cmd:SearchCmd) {
+        self.ig.update_cmd(cmd);
+    }
 }
 
 #[cfg_attr(test, mockall::automock)]
 pub trait Application {
+    fn update_cmd(&mut self,cmd:SearchCmd);
     fn is_searching(&self) -> bool;
     fn is_input_searching(&self) -> bool;
     fn is_normal(&self) -> bool;

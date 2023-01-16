@@ -8,4 +8,4 @@ mod context_viewer;
 mod input_handler;
 mod scroll_offset_list;
 pub mod theme;
-mod cmd_parse;
+pub mod cmd_parse;

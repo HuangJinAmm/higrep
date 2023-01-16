@@ -1,4 +1,4 @@
-use super::app::Application;
+use super::{app::Application, cmd_parse::SearchCmd};
 use anyhow::Result;
 use crossterm::event::{poll, read, Event, KeyCode, KeyEvent};
 use std::time::Duration;
@@ -95,6 +95,9 @@ impl InputHandler {
                 KeyCode::Enter => {
                     self.input_search_history.push(self.input_buffer.clone());
                     self.input_state = InputState::Valid;
+                    if let Some(cmd) = SearchCmd::parse(self.input_buffer.clone()){
+                        app.update_cmd(cmd);
+                    }
                     app.on_search();
                 },
                 KeyCode::Down => {

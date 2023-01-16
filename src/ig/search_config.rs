@@ -5,6 +5,8 @@ use ignore::{
 };
 use std::path::PathBuf;
 
+use crate::ui::cmd_parse::SearchCmd;
+
 pub struct SearchConfig {
     pub pattern: String,
     pub path: PathBuf,
@@ -21,6 +23,11 @@ pub struct SearchConfig {
 
 impl SearchConfig {
 
+    pub fn update_from(&mut self,cmd: SearchCmd) {
+        self.pattern = cmd.pattern;
+        self.after_context = cmd.after_context;
+        self.before_context = cmd.before_context;
+    }
 
     pub fn from(pattern: String, path: PathBuf) -> Result<Self> {
         let mut builder = TypesBuilder::new();

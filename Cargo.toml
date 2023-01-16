@@ -12,7 +12,7 @@ categories = ["command-line-utilities"]
 edition = "2021"
 
 [[bin]]
-name = "ig"
+name = "hg"
 path = "src/main.rs"
 
 [dependencies]

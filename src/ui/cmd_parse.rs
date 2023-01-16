@@ -11,21 +11,29 @@ use nom::number::complete::be_u16;
 use nom::sequence::{delimited, terminated, preceded, pair};
 
 pub struct SearchCmd {
-    pattern: String,
-    before_context:usize,
-    after_context:usize,
+    pub pattern: String,
+    pub before_context:usize,
+    pub after_context:usize,
 }
 
 impl SearchCmd {
     
     pub fn parse(cmd:String) -> Option<Self> {
-        let Ok(rp) = parttern_parser(&cmd) else {return None};
-        let around = around_parser(rp.0).unwrap_or(("",(0,0)));
-        Some(Self {
-            pattern: rp.1.to_owned(),
-            before_context: around.1.0 as usize,
-            after_context: around.1.1 as usize,
-        })
+        if cmd.contains("--") {
+            let Ok(rp) = parttern_parser(&cmd) else {return None};
+            let around = around_parser(rp.0).unwrap_or(("",(0,0)));
+            Some(Self {
+                pattern: rp.1.to_owned(),
+                before_context: around.1.0 as usize,
+                after_context: around.1.1 as usize,
+            })
+        } else {
+            Some(Self{
+                pattern:cmd,
+                before_context:0,
+                after_context:0,
+            })
+        }
     }
 }
 
@@ -104,7 +112,7 @@ mod tests {
 
     #[test]
     fn test_parser() {
-        let input = "--12322";
+        let input = "--";
         let res =around_parser(input).unwrap(); 
         println!("{:#?}",res);
         // assert_eq!(res.1,123);

@@ -1,8 +1,8 @@
 use anyhow::Result;
-use std::sync::{mpsc, Arc};
+use std::{sync::{mpsc, Arc, RwLock}, borrow::BorrowMut, cell::{RefCell, Cell}};
 
 use super::{sink::MatchesSink, SearchConfig};
-use crate::file_entry::FileEntry;
+use crate::{file_entry::FileEntry, ui::cmd_parse::SearchCmd};
 use grep::{
     matcher::LineTerminator,
     regex::RegexMatcherBuilder,
@@ -17,28 +17,35 @@ pub(crate) enum Event {
 }
 
 pub(crate) struct Searcher {
-    inner: Arc<SearcherImpl>,
+    inner:Arc<RwLock<SearcherImpl>>,
     tx: mpsc::Sender<Event>,
 }
 
 impl Searcher {
     pub(crate) fn new(config: SearchConfig, tx: mpsc::Sender<Event>) -> Self {
         Self {
-            inner: Arc::new(SearcherImpl::new(config)),
+            inner: Arc::new(RwLock::new (SearcherImpl::new(config))),
             tx,
         }
     }
 
     pub(crate) fn search(&self) {
-        let local_self = self.inner.clone();
+        let local_self_clone = self.inner.clone();
         let tx_local = self.tx.clone();
         let _ = std::thread::spawn(move || {
-            if local_self.run(tx_local.clone()).is_err() {
-                tx_local.send(Event::Error).ok();
-            }
+            if let Ok(local_self_th) = local_self_clone.read() {
+                if local_self_th.run(tx_local.clone()).is_err() {
+                    tx_local.send(Event::Error).ok();
+                }
 
-            tx_local.send(Event::SearchingFinished).ok();
+                tx_local.send(Event::SearchingFinished).ok();
+            }
         });
+    }
+
+    pub(crate) fn update_cmd(&mut self,cmd:SearchCmd) {
+        let mut lock = self.inner.write().unwrap();
+        lock.update_cmd(cmd)
     }
 }
 
@@ -51,14 +58,18 @@ impl SearcherImpl {
         Self { config }
     }
 
+    fn update_cmd(&mut self,cmd: SearchCmd) {
+        self.config.update_from(cmd);
+    }
+
     fn run(&self, tx: mpsc::Sender<Event>) -> Result<()> {
         let grep_searcher = SearcherBuilder::new()
             .binary_detection(BinaryDetection::quit(b'\x00'))
             .line_terminator(LineTerminator::byte(b'\n'))
             .line_number(true)
             .multi_line(false)
-            .after_context(3)
-            .before_context(4)
+            .after_context(self.config.after_context)
+            .before_context(self.config.before_context)
             .build();
 
         let matcher = RegexMatcherBuilder::new()
