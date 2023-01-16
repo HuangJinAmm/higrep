@@ -13,9 +13,15 @@ pub struct SearchConfig {
     pub overrides: Override,
     pub types: Types,
     pub search_hidden: bool,
+
+    pub after_context:usize,
+    pub before_context:usize,
+
 }
 
 impl SearchConfig {
+
+
     pub fn from(pattern: String, path: PathBuf) -> Result<Self> {
         let mut builder = TypesBuilder::new();
         builder.add_defaults();
@@ -29,6 +35,8 @@ impl SearchConfig {
             overrides: Override::empty(),
             types,
             search_hidden: false,
+            after_context:0,
+            before_context:0,
         })
     }
 
