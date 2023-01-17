@@ -1,5 +1,9 @@
 use anyhow::Result;
-use std::{sync::{mpsc, Arc, RwLock}, borrow::BorrowMut, cell::{RefCell, Cell}};
+use std::{
+    borrow::BorrowMut,
+    cell::{Cell, RefCell},
+    sync::{mpsc, Arc, RwLock},
+};
 
 use super::{sink::MatchesSink, SearchConfig};
 use crate::{file_entry::FileEntry, ui::cmd_parse::SearchCmd};
@@ -17,14 +21,14 @@ pub(crate) enum Event {
 }
 
 pub(crate) struct Searcher {
-    inner:Arc<RwLock<SearcherImpl>>,
+    inner: Arc<RwLock<SearcherImpl>>,
     tx: mpsc::Sender<Event>,
 }
 
 impl Searcher {
     pub(crate) fn new(config: SearchConfig, tx: mpsc::Sender<Event>) -> Self {
         Self {
-            inner: Arc::new(RwLock::new (SearcherImpl::new(config))),
+            inner: Arc::new(RwLock::new(SearcherImpl::new(config))),
             tx,
         }
     }
@@ -43,7 +47,7 @@ impl Searcher {
         });
     }
 
-    pub(crate) fn update_cmd(&mut self,cmd:SearchCmd) {
+    pub(crate) fn update_cmd(&mut self, cmd: SearchCmd) {
         let mut lock = self.inner.write().unwrap();
         lock.update_cmd(cmd)
     }
@@ -58,7 +62,7 @@ impl SearcherImpl {
         Self { config }
     }
 
-    fn update_cmd(&mut self,cmd: SearchCmd) {
+    fn update_cmd(&mut self, cmd: SearchCmd) {
         self.config.update_from(cmd);
     }
 

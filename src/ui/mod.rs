@@ -4,8 +4,9 @@ pub use app::App;
 pub mod editor;
 pub mod result_list;
 
+pub mod cmd_parse;
 mod context_viewer;
 mod input_handler;
 mod scroll_offset_list;
 pub mod theme;
-pub mod cmd_parse;
+pub mod soft_warp;

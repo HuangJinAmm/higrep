@@ -11,19 +11,14 @@ impl FileEntry {
     pub fn new(name: String, matches: Vec<GrepMatch>) -> Self {
         Self(
             std::iter::once(EntryType::Header(name))
-                .chain(
-                    matches
-                        .into_iter()
-                        .map(|m| {
-
-                            let text = vec!["-";100].join("-");
-                            if m.text == text {
-                                EntryType::Header(text)
-                            } else {
-                                EntryType::Match(m.line_number, m.text, m.match_offsets)
-                            }
-                        }),
-                )
+                .chain(matches.into_iter().map(|m| {
+                    let text = vec!["-"; 100].join("-");
+                    if m.text == text {
+                        EntryType::Header(text)
+                    } else {
+                        EntryType::Match(m.line_number, m.text, m.match_offsets)
+                    }
+                }))
                 .collect(),
         )
     }

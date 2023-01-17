@@ -7,6 +7,7 @@ use std::path::PathBuf;
 
 use crate::ui::cmd_parse::SearchCmd;
 
+#[derive(Debug)]
 pub struct SearchConfig {
     pub pattern: String,
     pub path: PathBuf,
@@ -16,14 +17,12 @@ pub struct SearchConfig {
     pub types: Types,
     pub search_hidden: bool,
 
-    pub after_context:usize,
-    pub before_context:usize,
-
+    pub after_context: usize,
+    pub before_context: usize,
 }
 
 impl SearchConfig {
-
-    pub fn update_from(&mut self,cmd: SearchCmd) {
+    pub fn update_from(&mut self, cmd: SearchCmd) {
         self.pattern = cmd.pattern;
         self.after_context = cmd.after_context;
         self.before_context = cmd.before_context;
@@ -42,8 +41,8 @@ impl SearchConfig {
             overrides: Override::empty(),
             types,
             search_hidden: false,
-            after_context:0,
-            before_context:0,
+            after_context: 0,
+            before_context: 0,
         })
     }
 

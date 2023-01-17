@@ -1,10 +1,11 @@
 use super::{
+    cmd_parse::SearchCmd,
     context_viewer::ContextViewerState,
     editor::Editor,
     input_handler::{InputHandler, InputState},
     result_list::ResultList,
     scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
-    theme::Theme, cmd_parse::SearchCmd,
+    theme::Theme, soft_warp::{SoftWrapper, SplitPosType},
 };
 
 use crate::{
@@ -17,8 +18,9 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use unicode_width::UnicodeWidthStr;
 
-use std::{path::PathBuf, default};
+use std::{default, path::PathBuf};
 use tui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -28,14 +30,13 @@ use tui::{
     Frame, Terminal,
 };
 
-#[derive(Default,PartialEq, Eq)]
+#[derive(Default, PartialEq, Eq)]
 enum BottomBarState {
     Help,
     Input,
     #[default]
-    Normal
+    Normal,
 }
-
 
 pub struct App {
     ig: Ig,
@@ -148,7 +149,6 @@ impl App {
             Self::draw_context_viewer(frame, cv_area, app);
         }
         Self::draw_bottom_bar(frame, bottom_bar_area, app, input_handler);
-
     }
 
     fn draw_list(frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect, app: &mut App) {
@@ -161,36 +161,60 @@ impl App {
                     ListItem::new(Span::styled(h, app.theme.file_path_color()))
                 }
                 EntryType::Match(n, t, offsets) => {
+
                     let line_number =
                         Span::styled(format!(" {}: ", n), app.theme.line_number_color());
 
+                    let mut line :Vec<Spans>= Vec::new();
+
+                    let t_len = t.width();
+                    let max_width = area.width as usize;
+                    let mut current_position = 0;
+
+                    let soft_wrapper = SoftWrapper::new(max_width,offsets,t_len);
+
+                    let mut match_flag = false;
                     let mut spans = vec![line_number];
 
-                    let mut current_position = 0;
-                    if let Some(offsets) = offsets {
-                        for offset in offsets {
-                            let before_match = Span::styled(
-                                &t[current_position..offset.0],
-                                app.theme.list_font_color(),
-                            );
-                            let actual_match =
-                                Span::styled(&t[offset.0..offset.1], app.theme.match_color());
+                    for split_pos in soft_wrapper.positions {
 
-                            // set current position to the end of current match
-                            current_position = offset.1;
+                        let sty = if match_flag {
+                            app.theme.match_color()
+                        } else {
+                            app.theme.list_font_color()
+                        };
 
-                            spans.push(before_match);
-                            spans.push(actual_match);
+                        match split_pos {
+                            SplitPosType::Crlf(x) => {
+                                let newline_span = Span::styled(
+                                    &t[current_position..x],
+                                    sty,
+                                );
+                                spans.push(newline_span);
+                                line.push(Spans::from(spans.clone()));
+                                spans.clear();
+                                current_position = x;
+                            },
+                            SplitPosType::MatchStart(x) =>{
+                                let before_match = Span::styled(
+                                    &t[current_position..x],
+                                    sty,
+                                );
+                                spans.push(before_match);
+                                current_position = x;
+                                match_flag = true;
+                            },
+                            SplitPosType::MatchEnd(x) => {
+
+                                let actual_match_line =
+                                    Span::styled(&t[current_position..x], sty);
+                                spans.push(actual_match_line);
+                                current_position = x;
+                                match_flag = false;
+                            },
                         }
-                    };
-
-                    // push remaining text of a line
-                    spans.push(Span::styled(
-                        &t[current_position..],
-                        app.theme.list_font_color(),
-                    ));
-
-                    ListItem::new(Spans::from(spans))
+                    }
+                    ListItem::new(line)
                 }
             })
             .collect();
@@ -271,16 +295,20 @@ impl App {
         app: &mut App,
         input_handler: &InputHandler,
     ) {
-
         match app.bottom_bar_state {
             BottomBarState::Help => draw_bottom_help(app, frame, area),
-            BottomBarState::Input => draw_bottom_bar_input(app,input_handler, area, frame),
+            BottomBarState::Input => draw_bottom_bar_input(app, input_handler, area, frame),
             BottomBarState::Normal => draw_bottom_bar_normal(app, input_handler, area, frame),
         }
     }
 }
 
-fn draw_bottom_bar_input(app:&mut App ,input_handler: &InputHandler, area: Rect, frame: &mut Frame<CrosstermBackend<std::io::Stdout>>){
+fn draw_bottom_bar_input(
+    app: &mut App,
+    input_handler: &InputHandler,
+    area: Rect,
+    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
+) {
     let app_status_text = "输入";
     let app_status_style = app.theme.searching_state_style();
     let app_status = Span::styled(app_status_text, app_status_style);
@@ -299,13 +327,7 @@ fn draw_bottom_bar_input(app:&mut App ,input_handler: &InputHandler, area: Rect,
 
     let hsplit = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints(
-            [
-                Constraint::Length(12),
-                Constraint::Min(1),
-            ]
-            .as_ref(),
-        )
+        .constraints([Constraint::Length(12), Constraint::Min(1)].as_ref())
         .split(area);
     frame.render_widget(
         Paragraph::new(app_status)
@@ -321,8 +343,12 @@ fn draw_bottom_bar_input(app:&mut App ,input_handler: &InputHandler, area: Rect,
     );
 }
 
-
-fn draw_bottom_bar_normal(app: &mut App, input_handler: &InputHandler, area: Rect, frame: &mut Frame<CrosstermBackend<std::io::Stdout>>) {
+fn draw_bottom_bar_normal(
+    app: &mut App,
+    input_handler: &InputHandler,
+    area: Rect,
+    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
+) {
     let current_match_index = app.result_list.get_current_match_index();
     let (app_status_text, app_status_style) = if app.ig.is_searching() {
         ("搜索中", app.theme.searching_state_style())
@@ -414,18 +440,22 @@ fn draw_bottom_bar_normal(app: &mut App, input_handler: &InputHandler, area: Rec
     );
 }
 
-fn draw_bottom_help(app: &mut App, frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
+fn draw_bottom_help(
+    app: &mut App,
+    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
+    area: Rect,
+) {
     let negavitor_help = Span::styled("hjkl上下左右 ", app.theme.bottom_bar_style());
     let flash_help = Span::styled("F5刷新 ", app.theme.bottom_bar_style());
     let re_input = Span::styled("F2输入搜索条件 ", app.theme.bottom_bar_style());
-    let help = Paragraph::new(Spans::from(vec![negavitor_help,flash_help,re_input]));
+    let help = Paragraph::new(Spans::from(vec![negavitor_help, flash_help, re_input]));
     frame.render_widget(
-            help
-            .style(app.theme.bottom_bar_style())
+        help.style(app.theme.bottom_bar_style())
             .alignment(Alignment::Left),
         area,
     );
 }
+
 
 impl Application for App {
     fn is_searching(&self) -> bool {
@@ -507,14 +537,14 @@ impl Application for App {
         self.bottom_bar_state == BottomBarState::Input
     }
 
-    fn update_cmd(&mut self,cmd:SearchCmd) {
+    fn update_cmd(&mut self, cmd: SearchCmd) {
         self.ig.update_cmd(cmd);
     }
 }
 
 #[cfg_attr(test, mockall::automock)]
 pub trait Application {
-    fn update_cmd(&mut self,cmd:SearchCmd);
+    fn update_cmd(&mut self, cmd: SearchCmd);
     fn is_searching(&self) -> bool;
     fn is_input_searching(&self) -> bool;
     fn is_normal(&self) -> bool;
@@ -534,4 +564,3 @@ pub trait Application {
     fn on_show_help(&mut self);
     fn on_input_search(&mut self);
 }
-
