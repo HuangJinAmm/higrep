@@ -70,6 +70,7 @@ impl SearcherImpl {
         let grep_searcher = SearcherBuilder::new()
             .binary_detection(BinaryDetection::quit(b'\x00'))
             .line_terminator(LineTerminator::byte(b'\n'))
+            // .line_terminator(LineTerminator::crlf())
             .line_number(true)
             .multi_line(false)
             .after_context(self.config.after_context)

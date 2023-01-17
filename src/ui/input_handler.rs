@@ -96,10 +96,11 @@ impl InputHandler {
             match key_code {
                 KeyCode::Enter => {
                     self.input_search_history.push(self.input_buffer.clone());
-                    self.input_state = InputState::Valid;
                     if let Some(cmd) = SearchCmd::parse(self.input_buffer.clone()) {
                         app.update_cmd(cmd);
                     }
+                    self.input_buffer.clear();
+                    self.input_state = InputState::Valid;
                     app.on_search();
                 }
                 KeyCode::Down => {
@@ -135,6 +136,7 @@ impl InputHandler {
                 KeyCode::F(5) => app.on_search(),
                 KeyCode::F(1) => app.on_show_help(),
                 KeyCode::F(2) => {
+                    self.input_buffer.clear();
                     self.input_state = InputState::Incomplete(self.input_buffer.clone());
                     app.on_input_search();
                 }
