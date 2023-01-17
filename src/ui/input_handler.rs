@@ -80,6 +80,8 @@ impl InputHandler {
                 "s" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
                     app.on_toggle_context_viewer_horizontal()
                 }),
+                "z" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_show_help()),
+                ":" => consume_buffer_and_execute(&mut self.input_buffer,&mut || app.on_input_search()),
                 "q" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_exit()),
                 "g" => self.input_state = InputState::Incomplete("g…".into()),
                 "d" => self.input_state = InputState::Incomplete("d…".into()),
@@ -95,8 +97,8 @@ impl InputHandler {
         if app.is_input_searching() {
             match key_code {
                 KeyCode::Enter => {
-                    self.input_search_history.push(self.input_buffer.clone());
-                    if let Some(cmd) = SearchCmd::parse(self.input_buffer.clone()) {
+                    // self.input_search_history.push(self.input_buffer.clone());
+                    if let Some(cmd) = SearchCmd::parse(&self.input_buffer) {
                         app.update_cmd(cmd);
                     }
                     self.input_buffer.clear();
@@ -116,6 +118,9 @@ impl InputHandler {
                 KeyCode::Backspace => {
                     let _ = self.input_buffer.pop();
                     self.input_state = InputState::Incomplete(self.input_buffer.clone());
+                }
+                KeyCode::Esc => {
+                    app.on_to_normal();
                 }
                 _ => (),
             }

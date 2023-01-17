@@ -32,7 +32,6 @@ use tui::{
 
 #[derive(Default, PartialEq, Eq)]
 enum BottomBarState {
-    Help,
     Input,
     #[default]
     Normal,
@@ -45,6 +44,7 @@ pub struct App {
     context_viewer_state: ContextViewerState,
     bottom_bar_state: BottomBarState,
     theme: Box<dyn Theme>,
+    show_help:bool,
 }
 
 impl App {
@@ -56,6 +56,7 @@ impl App {
             bottom_bar_state: BottomBarState::default(),
             context_viewer_state: ContextViewerState::default(),
             theme,
+            show_help:false,
         }
     }
 
@@ -149,6 +150,11 @@ impl App {
             Self::draw_context_viewer(frame, cv_area, app);
         }
         Self::draw_bottom_bar(frame, bottom_bar_area, app, input_handler);
+
+        if app.show_help {
+            let help_area = Self::centered_rect(40, 40, view_area);
+            draw_help(app, frame, help_area);
+        }
     }
 
     fn draw_list(frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect, app: &mut App) {
@@ -296,7 +302,6 @@ impl App {
         input_handler: &InputHandler,
     ) {
         match app.bottom_bar_state {
-            BottomBarState::Help => draw_bottom_help(app, frame, area),
             BottomBarState::Input => draw_bottom_bar_input(app, input_handler, area, frame),
             BottomBarState::Normal => draw_bottom_bar_normal(app, input_handler, area, frame),
         }
@@ -440,15 +445,16 @@ fn draw_bottom_bar_normal(
     );
 }
 
-fn draw_bottom_help(
+fn draw_help(
     app: &mut App,
     frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
     area: Rect,
 ) {
+    let block= Block::default().borders(Borders::ALL).border_type(BorderType::Rounded);
     let negavitor_help = Span::styled("hjkl上下左右 ", app.theme.bottom_bar_style());
     let flash_help = Span::styled("F5刷新 ", app.theme.bottom_bar_style());
     let re_input = Span::styled("F2输入搜索条件 ", app.theme.bottom_bar_style());
-    let help = Paragraph::new(Spans::from(vec![negavitor_help, flash_help, re_input]));
+    let help = Paragraph::new(Spans::from(vec![negavitor_help, flash_help, re_input])).block(block);
     frame.render_widget(
         help.style(app.theme.bottom_bar_style())
             .alignment(Alignment::Left),
@@ -519,10 +525,7 @@ impl Application for App {
     }
 
     fn on_show_help(&mut self) {
-        match self.bottom_bar_state {
-            BottomBarState::Help => self.bottom_bar_state = BottomBarState::Normal,
-            _ => self.bottom_bar_state = BottomBarState::Help,
-        }
+        self.show_help = !self.show_help;
     }
 
     fn on_input_search(&mut self) {
@@ -534,7 +537,11 @@ impl Application for App {
     }
 
     fn is_normal(&self) -> bool {
-        self.bottom_bar_state == BottomBarState::Input
+        self.bottom_bar_state == BottomBarState::Normal
+    }
+
+    fn on_to_normal(&mut self) {
+        self.bottom_bar_state = BottomBarState::Normal;
     }
 
     fn update_cmd(&mut self, cmd: SearchCmd) {
@@ -563,4 +570,5 @@ pub trait Application {
     fn on_exit(&mut self);
     fn on_show_help(&mut self);
     fn on_input_search(&mut self);
+    fn on_to_normal(&mut self);
 }

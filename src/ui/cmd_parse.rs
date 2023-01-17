@@ -12,9 +12,9 @@ pub struct SearchCmd {
 }
 
 impl SearchCmd {
-    pub fn parse(cmd: String) -> Option<Self> {
+    pub fn parse(cmd: &String) -> Option<Self> {
         if cmd.contains("--") {
-            let Ok(rp) = parttern_parser(&cmd) else {return None};
+            let Ok(rp) = parttern_parser(cmd) else {return None};
             let around = around_parser(rp.0).unwrap_or(("", (0, 0)));
             let pat = rp.1.trim().to_owned();
             Some(Self {
@@ -27,7 +27,7 @@ impl SearchCmd {
                 None
             } else {
                 Some(Self {
-                    pattern: cmd,
+                    pattern: cmd.to_owned(),
                     before_context: 0,
                     after_context: 0,
                 })
@@ -67,7 +67,6 @@ fn around_parser(input: &str) -> IResult<&str, (u16, u16)> {
     let res = preceded(tag("--"), take_str)(input)?;
     if let Ok(a_or_b) = ab_num_parser(res.1) {
         let v_ab = a_or_b.1;
-        println!("{:#?}", v_ab);
         match v_ab[..] {
             [] => {
                 let ab = to_u16(res.1).unwrap_or_default();
@@ -105,8 +104,6 @@ fn parttern_parser(input: &str) -> IResult<&str, &str> {
 
 #[cfg(test)]
 mod tests {
-    use crate::ui::result_list;
-
     use super::*;
 
     #[test]
