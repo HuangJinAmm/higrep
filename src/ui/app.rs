@@ -1,6 +1,6 @@
 use super::{
     cmd_parse::SearchCmd,
-    context_viewer::ContextViewerState,
+    // context_viewer::ContextViewerState,
     editor::Editor,
     input_handler::{InputHandler, InputState},
     result_list::ResultList,
@@ -24,9 +24,9 @@ use std::{default, path::PathBuf};
 use tui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::Style,
-    text::{Span, Spans},
-    widgets::{Block, BorderType, Borders, Paragraph},
+    style::{Style, Modifier, Color},
+    text::{Span, Spans, Text},
+    widgets::{Block, BorderType, Borders, Paragraph, Clear},
     Frame, Terminal,
 };
 
@@ -41,7 +41,7 @@ pub struct App {
     ig: Ig,
     result_list: ResultList,
     result_list_state: ListState,
-    context_viewer_state: ContextViewerState,
+    // context_viewer_state: ContextViewerState,
     bottom_bar_state: BottomBarState,
     theme: Box<dyn Theme>,
     show_help:bool,
@@ -54,7 +54,7 @@ impl App {
             result_list: ResultList::default(),
             result_list_state: ListState::default(),
             bottom_bar_state: BottomBarState::default(),
-            context_viewer_state: ContextViewerState::default(),
+            // context_viewer_state: ContextViewerState::default(),
             theme,
             show_help:false,
         }
@@ -88,14 +88,14 @@ impl App {
                 }
                 input_handler.handle_input(self)?;
 
-                if let Some((file_name, _)) = self.result_list.get_selected_entry() {
-                    if let Some(context_viewer) = self.context_viewer_state.viewer() {
-                        context_viewer.highlight_file_if_needed(
-                            &PathBuf::from(file_name),
-                            self.theme.as_ref(),
-                        );
-                    }
-                }
+                // if let Some((file_name, _)) = self.result_list.get_selected_entry() {
+                //     if let Some(context_viewer) = self.context_viewer_state.viewer() {
+                //         context_viewer.highlight_file_if_needed(
+                //             &PathBuf::from(file_name),
+                //             self.theme.as_ref(),
+                //         );
+                //     }
+                // }
             }
 
             self.ig
@@ -123,37 +123,38 @@ impl App {
 
         let (view_area, bottom_bar_area) = (chunks[0], chunks[1]);
 
-        let (list_area, cv_area) = match &app.context_viewer_state {
-            ContextViewerState::None => (view_area, None),
-            ContextViewerState::Vertical(_) => {
-                let chunks = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-                    .split(view_area);
+        let list_area = view_area;
+        // let (list_area, cv_area) = match &app.context_viewer_state {
+        //     ContextViewerState::None => (view_area, None),
+        //     ContextViewerState::Vertical(_) => {
+        //         let chunks = Layout::default()
+        //             .direction(Direction::Horizontal)
+        //             .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+        //             .split(view_area);
 
-                let (left, right) = (chunks[0], chunks[1]);
-                (left, Some(right))
-            }
-            ContextViewerState::Horizontal(_) => {
-                let chunks = Layout::default()
-                    .direction(Direction::Vertical)
-                    .constraints([Constraint::Percentage(60), Constraint::Percentage(40)])
-                    .split(view_area);
+        //         let (left, right) = (chunks[0], chunks[1]);
+        //         (left, Some(right))
+        //     }
+        //     ContextViewerState::Horizontal(_) => {
+        //         let chunks = Layout::default()
+        //             .direction(Direction::Vertical)
+        //             .constraints([Constraint::Percentage(60), Constraint::Percentage(40)])
+        //             .split(view_area);
 
-                let (top, bottom) = (chunks[0], chunks[1]);
-                (top, Some(bottom))
-            }
-        };
+        //         let (top, bottom) = (chunks[0], chunks[1]);
+        //         (top, Some(bottom))
+        //     }
+        // };
 
         Self::draw_list(frame, list_area, app);
-        if let Some(cv_area) = cv_area {
-            Self::draw_context_viewer(frame, cv_area, app);
-        }
+        // if let Some(cv_area) = cv_area {
+        //     Self::draw_context_viewer(frame, cv_area, app);
+        // }
         Self::draw_bottom_bar(frame, bottom_bar_area, app, input_handler);
 
         if app.show_help {
-            let help_area = Self::centered_rect(40, 40, view_area);
-            draw_help(app, frame, help_area);
+            let help_area = Self::centered_rect(50, 70, view_area);
+            draw_help(frame, help_area);
         }
     }
 
@@ -240,34 +241,34 @@ impl App {
         frame.render_stateful_widget(list_widget, area, &mut app.result_list_state);
     }
 
-    fn draw_context_viewer(
-        frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-        area: Rect,
-        app: &mut App,
-    ) {
-        let block_widget = Block::default()
-            .borders(Borders::ALL)
-            .border_type(BorderType::Rounded);
+    // fn draw_context_viewer(
+    //     frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
+    //     area: Rect,
+    //     app: &mut App,
+    // ) {
+    //     let block_widget = Block::default()
+    //         .borders(Borders::ALL)
+    //         .border_type(BorderType::Rounded);
 
-        if let Some((_, line_number)) = app.result_list.get_selected_entry() {
-            let height = area.height as u64;
-            let first_line_index = line_number.saturating_sub(height / 2);
+    //     if let Some((_, line_number)) = app.result_list.get_selected_entry() {
+    //         let height = area.height as u64;
+    //         let first_line_index = line_number.saturating_sub(height / 2);
 
-            let paragraph_widget =
-                Paragraph::new(app.context_viewer_state.viewer().unwrap().get_styled_spans(
-                    first_line_index as usize,
-                    height as usize,
-                    area.width as usize,
-                    line_number as usize,
-                    app.theme.as_ref(),
-                ))
-                .block(block_widget);
+    //         let paragraph_widget =
+    //             Paragraph::new(app.context_viewer_state.viewer().unwrap().get_styled_spans(
+    //                 first_line_index as usize,
+    //                 height as usize,
+    //                 area.width as usize,
+    //                 line_number as usize,
+    //                 app.theme.as_ref(),
+    //             ))
+    //             .block(block_widget);
 
-            frame.render_widget(paragraph_widget, area);
-        } else {
-            frame.render_widget(block_widget, area);
-        }
-    }
+    //         frame.render_widget(paragraph_widget, area);
+    //     } else {
+    //         frame.render_widget(block_widget, area);
+    //     }
+    // }
 
     fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         let popup_layout = Layout::default()
@@ -446,20 +447,80 @@ fn draw_bottom_bar_normal(
 }
 
 fn draw_help(
-    app: &mut App,
     frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
     area: Rect,
 ) {
-    let block= Block::default().borders(Borders::ALL).border_type(BorderType::Rounded);
-    let negavitor_help = Span::styled("hjkl上下左右 ", app.theme.bottom_bar_style());
-    let flash_help = Span::styled("F5刷新 ", app.theme.bottom_bar_style());
-    let re_input = Span::styled("F2输入搜索条件 ", app.theme.bottom_bar_style());
-    let help = Paragraph::new(Spans::from(vec![negavitor_help, flash_help, re_input])).block(block);
+    let block= Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .title("帮助");
+    let block_l= Block::default()
+        .borders(Borders::RIGHT)
+        .border_type(BorderType::Rounded)
+        .title("按键");
+    let block_r= Block::default()
+        .border_type(BorderType::Rounded)
+        .title("说明");
+    frame.render_widget(Clear, area);
+    let inner_area = block.inner(area);
+    frame.render_widget(block, area);
+
+
+    let vsplit = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(
+            [
+                Constraint::Percentage(25),
+                Constraint::Percentage(75),
+            ]
+            .as_ref(),
+        )
+        .split(inner_area);
+
+    let style1 = Style::default().add_modifier(Modifier::ITALIC).fg(Color::Green);
+    let style2 = Style::default().add_modifier(Modifier::BOLD).fg(Color::Yellow);
+
+    let l_help = vec![
+        help_item("h\\j\\k\\l",style1),
+        help_item("gg\\Shift+g",style1),
+        help_item("dd\\df",style1),
+        help_item("F1\\z",style1),
+        help_item("F5",style1),
+        help_item("F2\\:",style1),
+        help_item("Enter",style1),
+        help_item("",style1),
+    ];
+
+    let r_help = vec![
+        help_item("上\\下\\上个文件\\下个文件导航",style2),
+        help_item("跳到开头\\跳到末尾",style2),
+        help_item("删除当前行\\删除当前文件(只删除显示)",style2),
+        help_item("打开帮助",style2),
+        help_item("刷新",style2),
+        help_item("输入搜索条件",style2),
+        help_item("浏览模式下:打开当前行的文件（默认用vim,--editor参数配置）",style2),
+        help_item("输入模式下:搜索输入的条件",style2),
+    ];
+
+
+    let helpk1 = Paragraph::new(Text::from(l_help)).alignment(Alignment::Left).block(block_l);
+    let helpv1 = Paragraph::new(Text::from(r_help)).alignment(Alignment::Left).block(block_r);
+    
+
+
     frame.render_widget(
-        help.style(app.theme.bottom_bar_style())
-            .alignment(Alignment::Left),
-        area,
+        helpk1,
+        vsplit[0],
     );
+    frame.render_widget(
+        helpv1,
+        vsplit[1],
+    );
+}
+
+fn help_item<'a>(action:&'a str,sty:Style) -> Spans<'a> {
+    let ac_span = Span::styled(action, sty);
+    Spans::from(vec![ac_span]) 
 }
 
 
@@ -500,13 +561,13 @@ impl Application for App {
         self.result_list.remove_current_file();
     }
 
-    fn on_toggle_context_viewer_vertical(&mut self) {
-        self.context_viewer_state.toggle_vertical();
-    }
+    // fn on_toggle_context_viewer_vertical(&mut self) {
+    //     self.context_viewer_state.toggle_vertical();
+    // }
 
-    fn on_toggle_context_viewer_horizontal(&mut self) {
-        self.context_viewer_state.toggle_horizontal();
-    }
+    // fn on_toggle_context_viewer_horizontal(&mut self) {
+    //     self.context_viewer_state.toggle_horizontal();
+    // }
 
     fn on_open_file(&mut self) {
         self.ig.open_file();
@@ -563,8 +624,8 @@ pub trait Application {
     fn on_bottom(&mut self);
     fn on_remove_current_entry(&mut self);
     fn on_remove_current_file(&mut self);
-    fn on_toggle_context_viewer_vertical(&mut self);
-    fn on_toggle_context_viewer_horizontal(&mut self);
+    // fn on_toggle_context_viewer_vertical(&mut self);
+    // fn on_toggle_context_viewer_horizontal(&mut self);
     fn on_open_file(&mut self);
     fn on_search(&mut self);
     fn on_exit(&mut self);

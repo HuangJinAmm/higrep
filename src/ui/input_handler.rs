@@ -71,15 +71,15 @@ impl InputHandler {
                 "dd" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
                     app.on_remove_current_entry()
                 }),
-                "dw" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                "df" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
                     app.on_remove_current_file()
                 }),
-                "v" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
-                    app.on_toggle_context_viewer_vertical()
-                }),
-                "s" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
-                    app.on_toggle_context_viewer_horizontal()
-                }),
+                // "v" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                //     app.on_toggle_context_viewer_vertical()
+                // }),
+                // "s" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                //     app.on_toggle_context_viewer_horizontal()
+                // }),
                 "z" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_show_help()),
                 ":" => consume_buffer_and_execute(&mut self.input_buffer,&mut || app.on_input_search()),
                 "q" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_exit()),
@@ -306,25 +306,25 @@ mod tests {
         handle_key_series(key_codes, &mut app_mock);
     }
 
-    #[test]
-    fn toggle_vertical_context_viewer() {
-        let mut app_mock = MockApplication::default();
-        app_mock
-            .expect_on_toggle_context_viewer_vertical()
-            .once()
-            .return_const(());
-        handle_key(KeyCode::Char('v'), &mut app_mock);
-    }
+    // #[test]
+    // fn toggle_vertical_context_viewer() {
+    //     let mut app_mock = MockApplication::default();
+    //     app_mock
+    //         .expect_on_toggle_context_viewer_vertical()
+    //         .once()
+    //         .return_const(());
+    //     handle_key(KeyCode::Char('v'), &mut app_mock);
+    // }
 
-    #[test]
-    fn toggle_horizontal_context_viewer() {
-        let mut app_mock = MockApplication::default();
-        app_mock
-            .expect_on_toggle_context_viewer_horizontal()
-            .once()
-            .return_const(());
-        handle_key(KeyCode::Char('s'), &mut app_mock);
-    }
+    // #[test]
+    // fn toggle_horizontal_context_viewer() {
+    //     let mut app_mock = MockApplication::default();
+    //     app_mock
+    //         .expect_on_toggle_context_viewer_horizontal()
+    //         .once()
+    //         .return_const(());
+    //     handle_key(KeyCode::Char('s'), &mut app_mock);
+    // }
 
     #[test]
     fn open_file() {
