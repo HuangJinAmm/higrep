@@ -74,12 +74,12 @@ impl InputHandler {
                 "df" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
                     app.on_remove_current_file()
                 }),
-                // "v" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
-                //     app.on_toggle_context_viewer_vertical()
-                // }),
-                // "s" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
-                //     app.on_toggle_context_viewer_horizontal()
-                // }),
+                "v" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                    app.on_toggle_context_viewer_vertical()
+                }),
+                "s" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                    app.on_toggle_context_viewer_horizontal()
+                }),
                 "z" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_show_help()),
                 ":" => consume_buffer_and_execute(&mut self.input_buffer,&mut || app.on_input_search()),
                 "q" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_exit()),
