@@ -1,4 +1,11 @@
-# igrep - Interactive Grep
+# higrep  
+
+higrep 是在[igrep](https://github.com/konradsz/igrep)上改造开发的一个查询工具。可以交互式查询，展示结果。并可以打开所在的文件（默认用vim)
+
+
+higrep is forked from igrep;
+
+以下是igrep的readme:
 Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/BurntSushi/ripgrep/) library) in the background, allows interactively pick its results and open selected match in text editor of choice (vim by default).
 
 `igrep` supports macOS and Linux. Reportedly it works on Windows as well.
@@ -56,7 +63,7 @@ NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSus
 | `F5`                     | Re-run search                          |
 
 ## Specifying text editor
-`igrep` supports Vim, Neovim, Helix, nano, VS Code (stable and insiders), Emacs and EmacsClient.
+`higrep` supports Vim, Neovim, Helix, nano, VS Code (stable and insiders), Emacs and EmacsClient.
 To specify the editor, use one of the following (listed in order of their precedence):
 - `--editor` option,
 - `$IGREP_EDITOR` variable,
@@ -66,7 +73,7 @@ Higher priority option overrides lower one. If neither of these options is set, 
 
 ## Installation
 ### Prebuilt binaries
-`igrep` binaries can be downloaded from [GitHub](https://github.com/konradsz/igrep/releases).
+`higrep` binaries can be downloaded from [GitHub](https://github.com/konradsz/igrep/releases).
 ### Homebrew
 ```
 brew tap konradsz/igrep https://github.com/konradsz/igrep.git
