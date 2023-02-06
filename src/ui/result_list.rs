@@ -43,6 +43,55 @@ impl ResultList {
         self.entries.is_empty()
     }
 
+    pub fn jump_to(&mut self,line:usize) {
+        if self.is_empty() {
+            return;
+        }
+        let max = self.entries.len();
+        let jump_line = if line < max{
+            let line = match self.entries[line] {
+                EntryType::Header(_)=> {
+                    line+1
+                },
+                EntryType::Match(_, _, _) => {
+                    line
+                },
+            };
+            line
+        } else {
+            max
+        };
+        self.state.select(Some(jump_line))
+    }
+
+    pub fn jump_to_relative(&mut self,delta:i32) {
+
+        if self.is_empty() {
+            return;
+        }
+        let index = match self.state.selected() {
+            Some(i) => {
+                let current = i as i32;
+                let max = self.entries.len() - 1;
+                if (current+delta) > max as i32{
+                    max
+                } else if (current + delta) < 1 {
+                    1 
+                } else {
+                    let jump_to = delta + i as i32;
+                    let jump_real = match self.entries[jump_to as usize] {
+                        EntryType::Header(_) => jump_to + 1,
+                        EntryType::Match(_, _, _) => jump_to,
+                    };
+                    jump_real as usize
+                }
+            }
+            None => 1,
+        };
+
+        self.state.select(Some(index));
+    }
+
     pub fn next_match(&mut self) {
         if self.is_empty() {
             return;

@@ -409,9 +409,9 @@ fn draw_bottom_bar_normal(
         .direction(Direction::Horizontal)
         .constraints(
             [
-                Constraint::Length(12),
+                Constraint::Length(10),
                 Constraint::Min(1),
-                Constraint::Length(2),
+                Constraint::Length(5),
                 Constraint::Length(selected_info_length as u16),
             ]
             .as_ref(),
@@ -480,6 +480,8 @@ fn draw_help(
     let l_help = vec![
         help_item("h\\j\\k\\l",style1),
         help_item("gg\\Shift+g",style1),
+        help_item("<num>g",style1),
+        help_item("+/-<num>g",style1),
         help_item("dd\\df",style1),
         help_item("F1\\z",style1),
         help_item("F5",style1),
@@ -493,6 +495,8 @@ fn draw_help(
     let r_help = vec![
         help_item("上\\下\\上个文件\\下个文件导航",style2),
         help_item("跳到开头\\跳到末尾",style2),
+        help_item("跳到指定<num>行数",style2),
+        help_item("跳到指定相对增加/减少<num>行数",style2),
         help_item("删除当前行\\删除当前文件(只删除显示)",style2),
         help_item("打开帮助",style2),
         help_item("刷新",style2),
@@ -609,6 +613,14 @@ impl Application for App {
     fn update_cmd(&mut self, cmd: SearchCmd) {
         self.ig.update_cmd(cmd);
     }
+
+    fn jump_to(&mut self,line:usize) {
+        self.result_list.jump_to(line);
+    }
+
+    fn jump_to_relative(&mut self,delta:i32) {
+        self.result_list.jump_to_relative(delta);
+    }
 }
 
 #[cfg_attr(test, mockall::automock)]
@@ -633,4 +645,6 @@ pub trait Application {
     fn on_show_help(&mut self);
     fn on_input_search(&mut self);
     fn on_to_normal(&mut self);
+    fn jump_to(&mut self,line:usize);
+    fn jump_to_relative(&mut self,delta:i32);
 }

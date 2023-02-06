@@ -149,6 +149,8 @@ impl<'a> StatefulWidget for List<'a> {
         if self.items.is_empty() {
             return;
         }
+
+        
         let list_height = list_area.height as usize;
 
         let mut start = state.offset;
