@@ -254,3 +254,14 @@ impl<'a> Widget for List<'a> {
         StatefulWidget::render(self, area, buf, &mut state);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_unicode() {
+        let mut teststr = "ab爱从".chars();
+        println!("{:#}", teststr.nth(3).unwrap().len_utf8());
+    }
+}

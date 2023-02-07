@@ -1,3 +1,7 @@
+use std::str::Chars;
+
+use unicode_width::UnicodeWidthChar;
+
 
 #[derive(Debug,PartialEq,Eq,Ord)]
 pub enum SplitPosType {
@@ -28,19 +32,36 @@ pub struct SoftWrapper {
 
 impl SoftWrapper {
     
-    pub fn new(max_width:usize,matches_offsets:&Option<Vec<(usize,usize)>>,max_len:usize) -> Self {
+    pub fn new(max_width:usize,matches_offsets:&Option<Vec<(usize,usize)>>,text:&String) -> Self {
+
         let mut positions = Vec::new();
-        let count = max_len/max_width;
-        for i in 1..=count {
-            positions.push(SplitPosType::Crlf(i*max_width));
+        if text.is_empty() {
+            return Self {
+                positions
+            };
         }
+        let uni_chars = text.chars();
+
+        let mut current_len = 0;
+        let mut byte_pos = 0;
+        for c in uni_chars {
+            if let Some(c_width) = UnicodeWidthChar::width(c) {
+                current_len += c_width;
+                if current_len >max_width {
+                    positions.push(SplitPosType::Crlf(byte_pos));
+                    current_len = c_width;
+                }
+            }
+            byte_pos += c.len_utf8();
+        }
+
         if let Some(off_sets) = matches_offsets {
             for (start,end) in off_sets{
                 positions.push(SplitPosType::MatchStart(start.to_owned()));
                 positions.push(SplitPosType::MatchEnd(end.to_owned()));
             }
         }
-        positions.push(SplitPosType::Crlf(max_len));
+        positions.push(SplitPosType::Crlf(text.len()));
         positions.sort();
 
         Self { positions }
@@ -66,5 +87,29 @@ mod tests {
         spts.sort();
 
         println!("{:#?}",spts);
+    }
+
+    #[test]
+    fn test_hanzi() {
+        let s = "ab从啊解决\r\ndd法大师傅a".to_owned();
+        let soft =SoftWrapper::new(3, &None, &s);
+
+        let mut  c = 0;
+        for spt in soft.positions {
+            match spt {
+                SplitPosType::Crlf(x) => {
+                    println!("CR|{}",&s[c..x]);
+                    c = x;
+                },
+                SplitPosType::MatchStart(x) => {
+                    println!("MS|{}",&s[c..x]);
+                    c = x;
+                },
+                SplitPosType::MatchEnd(x) =>{
+                    println!("ME|{}",&s[c..x]);
+                    c = x;
+                },
+            } 
+        }
     }
 }

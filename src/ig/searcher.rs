@@ -67,6 +67,10 @@ impl SearcherImpl {
     }
 
     fn run(&self, tx: mpsc::Sender<Event>) -> Result<()> {
+        if self.config.pattern.is_empty() {
+            return Ok(());
+        }
+
         let grep_searcher = SearcherBuilder::new()
             .binary_detection(BinaryDetection::quit(b'\x00'))
             .line_terminator(LineTerminator::byte(b'\n'))

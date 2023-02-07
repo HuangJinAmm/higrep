@@ -17,7 +17,7 @@ pub const RIPGREP_CONFIG_PATH_ENV: &str = "RIPGREP_CONFIG_PATH";
 #[clap(group(
             ArgGroup::new("excl")
                 .args(&["pattern", "type-list"])
-                .required(true)
+                .required(false)
 ))]
 pub struct Args {
     /// Regular expression used for searching.

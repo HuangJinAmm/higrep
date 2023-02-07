@@ -171,11 +171,9 @@ impl App {
 
                     let mut line :Vec<Spans>= Vec::new();
 
-                    let t_len = t.width();
                     let max_width = area.width as usize;
                     let mut current_position = 0;
-
-                    let soft_wrapper = SoftWrapper::new(max_width,offsets,t_len);
+                    let soft_wrapper = SoftWrapper::new(max_width,offsets,t);
 
                     let mut match_flag = false;
                     let mut spans = vec![line_number];
@@ -187,7 +185,6 @@ impl App {
                         } else {
                             app.theme.list_font_color()
                         };
-
                         match split_pos {
                             SplitPosType::Crlf(x) => {
                                 let newline_span = Span::styled(
