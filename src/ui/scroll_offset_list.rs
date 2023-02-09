@@ -21,6 +21,14 @@ impl ListState {
             self.offset = 0;
         }
     }
+
+    pub fn offset(&self) -> usize {
+        self.offset
+    }
+
+    pub fn set_offset(&mut self, offset: usize) {
+        self.offset = offset
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -80,7 +88,7 @@ impl ScrollOffset {
 #[derive(Debug, Clone)]
 pub struct List<'a> {
     block: Option<Block<'a>>,
-    items: Vec<ListItem<'a>>,
+    items: Vec<Option<ListItem<'a>>>,
     /// Style used as a base style for the widget
     style: Style,
     start_corner: Corner,
@@ -94,7 +102,7 @@ pub struct List<'a> {
 impl<'a> List<'a> {
     pub fn new<T>(items: T) -> List<'a>
     where
-        T: Into<Vec<ListItem<'a>>>,
+        T: Into<Vec<Option<ListItem<'a>>>>,
     {
         List {
             block: None,
@@ -156,28 +164,32 @@ impl<'a> StatefulWidget for List<'a> {
         let mut end = state.offset;
         let mut height = 0;
         for item in self.items.iter().skip(state.offset) {
-            if height + item.height() > list_height {
+            if item.is_none() {
+                return;
+            }
+
+            if height + item.as_ref().unwrap().height() > list_height {
                 break;
             }
-            height += item.height();
+            height += item.as_ref().unwrap().height();
             end += 1;
         }
 
         let selected = state.selected.unwrap_or(0).min(self.items.len() - 1);
         while selected >= end {
-            height = height.saturating_add(self.items[end].height());
+            height = height.saturating_add(self.items[end].as_ref().unwrap().height());
             end += 1;
             while height > list_height {
-                height = height.saturating_sub(self.items[start].height());
+                height = height.saturating_sub(self.items[start].as_ref().unwrap().height());
                 start += 1;
             }
         }
         while selected < start {
             start -= 1;
-            height = height.saturating_add(self.items[start].height());
+            height = height.saturating_add(self.items[start].as_ref().unwrap().height());
             while height > list_height {
                 end -= 1;
-                height = height.saturating_sub(self.items[end].height());
+                height = height.saturating_sub(self.items[end].as_ref().unwrap().height());
             }
         }
         state.offset = start;
@@ -206,12 +218,12 @@ impl<'a> StatefulWidget for List<'a> {
         {
             let (x, y) = match self.start_corner {
                 Corner::BottomLeft => {
-                    current_height += item.height() as u16;
+                    current_height += item.as_ref().unwrap().height() as u16;
                     (list_area.left(), list_area.bottom() - current_height)
                 }
                 _ => {
                     let pos = (list_area.left(), list_area.top() + current_height);
-                    current_height += item.height() as u16;
+                    current_height += item.as_ref().unwrap().height() as u16;
                     pos
                 }
             };
@@ -219,9 +231,9 @@ impl<'a> StatefulWidget for List<'a> {
                 x,
                 y,
                 width: list_area.width,
-                height: item.height() as u16,
+                height: item.as_ref().unwrap().height() as u16,
             };
-            let item_style = self.style.patch(item.style);
+            let item_style = self.style.patch(item.as_ref().unwrap().style);
             buf.set_style(area, item_style);
 
             let is_selected = state.selected.map(|s| s == i).unwrap_or(false);
@@ -237,7 +249,7 @@ impl<'a> StatefulWidget for List<'a> {
                 x
             };
             let max_element_width = (list_area.width - (elem_x - x)) as usize;
-            for (j, line) in item.content.lines.iter().enumerate() {
+            for (j, line) in item.as_ref().unwrap().content.lines.iter().enumerate() {
                 buf.set_spans(elem_x, y + j as u16, line, max_element_width as u16);
             }
             if is_selected {

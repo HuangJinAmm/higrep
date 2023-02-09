@@ -17,7 +17,6 @@ impl ListState {
 #[derive(Default)]
 pub struct ResultList {
     entries: Vec<EntryType>,
-    show_entries: Vec<EntryType>,
     state: ListState,
     file_entries_count: usize,
     matches_count: usize,
@@ -50,7 +49,6 @@ impl ResultList {
         }
         let max = self.entries.len();
         let jump_line = if line < max {
-            
             match self.entries[line] {
                 EntryType::Header(_) => line + 1,
                 EntryType::Match(_, _, _) => line,
@@ -354,7 +352,6 @@ impl ResultList {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
 
     #[test]
     fn test_empty_list() {

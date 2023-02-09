@@ -25,7 +25,7 @@ impl SearchConfig {
     pub fn update_from(&mut self, cmd: SearchCmd) {
         self.pattern = cmd.pattern;
         if let Some(globs) = cmd.golb {
-            if globs.len() > 0 {
+            if !globs.is_empty() {
                 let mut builder = OverrideBuilder::new(std::env::current_dir().unwrap());
                 for glob in globs {
                     let _ = builder.add(&glob);

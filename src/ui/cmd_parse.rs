@@ -47,7 +47,7 @@ impl SearchCmd {
             }
             let mut a = 0;
             let mut b = 0;
-            if let Some(ar) =caps.get(3) {
+            if let Some(ar) = caps.get(3) {
                 let arstr = ar.as_str();
                 if let Some(ab) = parse_ab(arstr) {
                     a = ab.0;
@@ -81,14 +81,17 @@ fn parse_ab(input: &str) -> Option<(usize, usize)> {
         let mstr = g1.as_str();
         if mstr.starts_with('a') {
             if let Some(num) = mstr.strip_prefix('a') {
-                a = usize::from_str_radix(num, 10).unwrap_or_default();
+                a = num.parse::<usize>().unwrap_or_default();
+                // a = usize::from_str_radix(num, 10).unwrap_or_default();
             }
         } else if mstr.starts_with('b') {
             if let Some(num) = mstr.strip_prefix('b') {
-                b = usize::from_str_radix(num, 10).unwrap_or_default();
+                b = num.parse::<usize>().unwrap_or_default();
+                // b = usize::from_str_radix(num, 10).unwrap_or_default();
             }
         } else {
-            a = usize::from_str_radix(mstr, 10).unwrap_or_default();
+            a = mstr.parse::<usize>().unwrap_or_default();
+            // a = usize::from_str_radix(mstr, 10).unwrap_or_default();
             b = a;
         }
     }
@@ -97,14 +100,17 @@ fn parse_ab(input: &str) -> Option<(usize, usize)> {
         let mstr = g1.as_str();
         if mstr.starts_with('a') {
             if let Some(num) = mstr.strip_prefix('a') {
-                a = usize::from_str_radix(num, 10).unwrap_or_default();
+                a = num.parse::<usize>().unwrap_or_default();
+                // a = usize::from_str_radix(num, 10).unwrap_or_default();
             }
         } else if mstr.starts_with('b') {
             if let Some(num) = mstr.strip_prefix('b') {
-                b = usize::from_str_radix(num, 10).unwrap_or_default();
+                b = num.parse::<usize>().unwrap_or_default();
+                // b = usize::from_str_radix(num, 10).unwrap_or_default();
             }
-        } else {
-            a = usize::from_str_radix(mstr, 10).unwrap_or_default();
+        } else { 
+            a = mstr.parse::<usize>().unwrap_or_default();
+            // a = usize::from_str_radix(mstr, 10).unwrap_or_default();
             b = a;
         }
     }
@@ -122,9 +128,9 @@ mod tests {
         let ms = CMD_RE_Q.captures(text).unwrap();
         ms.iter().enumerate().for_each(|s| {
             if let Some(re) = s.1 {
-                println!("{}--{}",s.0,re.as_str());
+                println!("{}--{}", s.0, re.as_str());
             } else {
-                println!("{}--None",s.0);
+                println!("{}--None", s.0);
             }
         });
         println!("----------------");
@@ -132,9 +138,9 @@ mod tests {
         let ms = CMD_RE.captures(text).unwrap();
         ms.iter().enumerate().for_each(|s| {
             if let Some(re) = s.1 {
-                println!("{}--{}",s.0,re.as_str());
+                println!("{}--{}", s.0, re.as_str());
             } else {
-                println!("{}--None",s.0);
+                println!("{}--None", s.0);
             }
         });
     }

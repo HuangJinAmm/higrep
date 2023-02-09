@@ -99,12 +99,14 @@ impl InputHandler {
                     if !(buf == "-g" || buf == "+g") && buf.ends_with('g') {
                         let line_str = &buf[0..buf.len() - 1];
                         if line_str.starts_with('-') || line_str.starts_with('+') {
-                            let line = i32::from_str_radix(line_str, 10).unwrap();
+                            // let line = i32::from_str_radix(line_str, 10).unwrap();
+                            let line = line_str.parse::<i32>().unwrap();
                             consume_buffer_and_execute(&mut self.input_buffer, &mut || {
                                 app.jump_to_relative(line)
                             });
                         } else {
-                            let line = usize::from_str_radix(line_str, 10).unwrap();
+                            let line = line_str.parse::<usize>().unwrap();
+                            // let line = usize::from_str_radix(line_str, 10).unwrap();
                             consume_buffer_and_execute(&mut self.input_buffer, &mut || {
                                 app.jump_to(line)
                             });

@@ -171,6 +171,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "crossterm"
+version = "0.26.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77f67c7faacd4db07a939f55d66a983a5355358a1f17d32cc9a8d01d1266b9ce"
+dependencies = [
+ "bitflags",
+ "crossterm_winapi",
+ "libc",
+ "mio",
+ "parking_lot",
+ "signal-hook",
+ "signal-hook-mio",
+ "winapi",
+]
+
+[[package]]
 name = "crossterm_winapi"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -365,6 +381,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "higrep"
+version = "1.3.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "crossterm 0.26.0",
+ "grep",
+ "ignore",
+ "itertools",
+ "lazy_static",
+ "mockall",
+ "regex",
+ "strum",
+ "strum_macros",
+ "syntect",
+ "test-case",
+ "tui",
+ "unicode-width",
+]
+
+[[package]]
 name = "ignore"
 version = "0.4.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -380,27 +417,6 @@ dependencies = [
  "thread_local",
  "walkdir",
  "winapi-util",
-]
-
-[[package]]
-name = "igrep"
-version = "1.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "crossterm",
- "grep",
- "ignore",
- "itertools",
- "lazy_static",
- "mockall",
- "nom",
- "strum",
- "strum_macros",
- "syntect",
- "test-case",
- "tui",
- "unicode-width",
 ]
 
 [[package]]
@@ -490,12 +506,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "minimal-lexical"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
-
-[[package]]
 name = "miniz_oxide"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -541,16 +551,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "nom"
-version = "7.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5507769c4919c998e69e49c839d9dc6e693ede4cc4290d6ad8b41d4f09c548c"
-dependencies = [
- "memchr",
- "minimal-lexical",
 ]
 
 [[package]]
@@ -1011,7 +1011,7 @@ checksum = "ccdd26cbd674007e649a272da4475fb666d3aa0ad0531da7136db6fab0e5bad1"
 dependencies = [
  "bitflags",
  "cassowary",
- "crossterm",
+ "crossterm 0.25.0",
  "unicode-segmentation",
  "unicode-width",
 ]

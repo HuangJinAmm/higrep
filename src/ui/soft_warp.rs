@@ -1,5 +1,3 @@
-
-
 use unicode_width::UnicodeWidthChar;
 
 #[derive(Debug, PartialEq, Eq, Ord)]
