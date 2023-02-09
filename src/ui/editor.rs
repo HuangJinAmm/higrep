@@ -35,8 +35,7 @@ impl Editor {
                 .map(Editor::to_string)
                 .join(", ");
             anyhow!(e).context(format!(
-                "\"{}\" read from ${}, possible variants: [{}]",
-                env_value, env_name, possible_variants
+                "\"{env_value}\" read from ${env_name}, possible variants: [{possible_variants}]"
             ))
         };
 
@@ -59,8 +58,7 @@ impl Editor {
         let mut command = EditorCommand::new(self, file_name, line_number);
         command.spawn().unwrap_or_else(|_| {
             panic!(
-                "Error: Failed to run editor with a command: \"{}\"",
-                command
+                "Error: Failed to run editor with a command: \"{command}\""
             );
         })
     }

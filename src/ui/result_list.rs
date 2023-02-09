@@ -17,6 +17,7 @@ impl ListState {
 #[derive(Default)]
 pub struct ResultList {
     entries: Vec<EntryType>,
+    show_entries: Vec<EntryType>,
     state: ListState,
     file_entries_count: usize,
     matches_count: usize,
@@ -43,29 +44,24 @@ impl ResultList {
         self.entries.is_empty()
     }
 
-    pub fn jump_to(&mut self,line:usize) {
+    pub fn jump_to(&mut self, line: usize) {
         if self.is_empty() {
             return;
         }
         let max = self.entries.len();
-        let jump_line = if line < max{
-            let line = match self.entries[line] {
-                EntryType::Header(_)=> {
-                    line+1
-                },
-                EntryType::Match(_, _, _) => {
-                    line
-                },
-            };
-            line
+        let jump_line = if line < max {
+            
+            match self.entries[line] {
+                EntryType::Header(_) => line + 1,
+                EntryType::Match(_, _, _) => line,
+            }
         } else {
             max
         };
         self.state.select(Some(jump_line))
     }
 
-    pub fn jump_to_relative(&mut self,delta:i32) {
-
+    pub fn jump_to_relative(&mut self, delta: i32) {
         if self.is_empty() {
             return;
         }
@@ -73,10 +69,10 @@ impl ResultList {
             Some(i) => {
                 let current = i as i32;
                 let max = self.entries.len() - 1;
-                if (current+delta) > max as i32{
+                if (current + delta) > max as i32 {
                     max
                 } else if (current + delta) < 1 {
-                    1 
+                    1
                 } else {
                     let jump_to = delta + i as i32;
                     let jump_real = match self.entries[jump_to as usize] {
@@ -358,7 +354,7 @@ impl ResultList {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::grep_match::GrepMatch;
+    
 
     #[test]
     fn test_empty_list() {

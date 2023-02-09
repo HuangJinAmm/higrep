@@ -1,13 +1,12 @@
-use std::str::Chars;
+
 
 use unicode_width::UnicodeWidthChar;
 
-
-#[derive(Debug,PartialEq,Eq,Ord)]
+#[derive(Debug, PartialEq, Eq, Ord)]
 pub enum SplitPosType {
     Crlf(usize),
     MatchStart(usize),
-    MatchEnd(usize)
+    MatchEnd(usize),
 }
 
 impl PartialOrd for SplitPosType {
@@ -15,12 +14,12 @@ impl PartialOrd for SplitPosType {
         let l = match self {
             SplitPosType::Crlf(x) => x,
             SplitPosType::MatchStart(x) => x,
-            SplitPosType::MatchEnd(x) =>x,
+            SplitPosType::MatchEnd(x) => x,
         };
         let r = match other {
             SplitPosType::Crlf(x) => x,
             SplitPosType::MatchStart(x) => x,
-            SplitPosType::MatchEnd(x) =>x,
+            SplitPosType::MatchEnd(x) => x,
         };
         Some(l.cmp(r))
     }
@@ -31,14 +30,14 @@ pub struct SoftWrapper {
 }
 
 impl SoftWrapper {
-    
-    pub fn new(max_width:usize,matches_offsets:&Option<Vec<(usize,usize)>>,text:&String) -> Self {
-
+    pub fn new(
+        max_width: usize,
+        matches_offsets: &Option<Vec<(usize, usize)>>,
+        text: &String,
+    ) -> Self {
         let mut positions = Vec::new();
         if text.is_empty() {
-            return Self {
-                positions
-            };
+            return Self { positions };
         }
         let uni_chars = text.chars();
 
@@ -47,7 +46,7 @@ impl SoftWrapper {
         for c in uni_chars {
             if let Some(c_width) = UnicodeWidthChar::width(c) {
                 current_len += c_width;
-                if current_len >max_width {
+                if current_len > max_width {
                     positions.push(SplitPosType::Crlf(byte_pos));
                     current_len = c_width;
                 }
@@ -56,7 +55,7 @@ impl SoftWrapper {
         }
 
         if let Some(off_sets) = matches_offsets {
-            for (start,end) in off_sets{
+            for (start, end) in off_sets {
                 positions.push(SplitPosType::MatchStart(start.to_owned()));
                 positions.push(SplitPosType::MatchEnd(end.to_owned()));
             }
@@ -86,30 +85,30 @@ mod tests {
 
         spts.sort();
 
-        println!("{:#?}",spts);
+        println!("{spts:#?}");
     }
 
     #[test]
     fn test_hanzi() {
         let s = "ab从啊解决\r\ndd法大师傅a".to_owned();
-        let soft =SoftWrapper::new(3, &None, &s);
+        let soft = SoftWrapper::new(3, &None, &s);
 
-        let mut  c = 0;
+        let mut c = 0;
         for spt in soft.positions {
             match spt {
                 SplitPosType::Crlf(x) => {
-                    println!("CR|{}",&s[c..x]);
+                    println!("CR|{}", &s[c..x]);
                     c = x;
-                },
+                }
                 SplitPosType::MatchStart(x) => {
-                    println!("MS|{}",&s[c..x]);
+                    println!("MS|{}", &s[c..x]);
                     c = x;
-                },
-                SplitPosType::MatchEnd(x) =>{
-                    println!("ME|{}",&s[c..x]);
+                }
+                SplitPosType::MatchEnd(x) => {
+                    println!("ME|{}", &s[c..x]);
                     c = x;
-                },
-            } 
+                }
+            }
         }
     }
 }

@@ -1,10 +1,12 @@
 use super::{
     cmd_parse::SearchCmd,
+    context_viewer::ContextViewerState,
     editor::Editor,
     input_handler::{InputHandler, InputState},
     result_list::ResultList,
     scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
-    theme::Theme, soft_warp::{SoftWrapper, SplitPosType}, context_viewer::ContextViewerState,
+    soft_warp::{SoftWrapper, SplitPosType},
+    theme::Theme,
 };
 
 use crate::{
@@ -17,15 +19,14 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use unicode_width::UnicodeWidthStr;
 
-use std::{default, path::PathBuf};
+use std::path::PathBuf;
 use tui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Style, Modifier, Color},
+    style::{Color, Modifier, Style},
     text::{Span, Spans, Text},
-    widgets::{Block, BorderType, Borders, Paragraph, Clear},
+    widgets::{Block, BorderType, Borders, Clear, Paragraph},
     Frame, Terminal,
 };
 
@@ -43,7 +44,7 @@ pub struct App {
     context_viewer_state: ContextViewerState,
     bottom_bar_state: BottomBarState,
     theme: Box<dyn Theme>,
-    show_help:bool,
+    show_help: bool,
 }
 
 impl App {
@@ -55,7 +56,7 @@ impl App {
             bottom_bar_state: BottomBarState::default(),
             context_viewer_state: ContextViewerState::default(),
             theme,
-            show_help:false,
+            show_help: false,
         }
     }
 
@@ -165,21 +166,19 @@ impl App {
                     ListItem::new(Span::styled(h, app.theme.file_path_color()))
                 }
                 EntryType::Match(n, t, offsets) => {
-
                     let line_number =
-                        Span::styled(format!(" {}: ", n), app.theme.line_number_color());
+                        Span::styled(format!(" {n}: "), app.theme.line_number_color());
 
-                    let mut line :Vec<Spans>= Vec::new();
+                    let mut line: Vec<Spans> = Vec::new();
 
                     let max_width = area.width as usize;
                     let mut current_position = 0;
-                    let soft_wrapper = SoftWrapper::new(max_width,offsets,t);
+                    let soft_wrapper = SoftWrapper::new(max_width, offsets, t);
 
                     let mut match_flag = false;
                     let mut spans = vec![line_number];
 
                     for split_pos in soft_wrapper.positions {
-
                         let sty = if match_flag {
                             app.theme.match_color()
                         } else {
@@ -187,32 +186,24 @@ impl App {
                         };
                         match split_pos {
                             SplitPosType::Crlf(x) => {
-                                let newline_span = Span::styled(
-                                    &t[current_position..x],
-                                    sty,
-                                );
+                                let newline_span = Span::styled(&t[current_position..x], sty);
                                 spans.push(newline_span);
                                 line.push(Spans::from(spans.clone()));
                                 spans.clear();
                                 current_position = x;
-                            },
-                            SplitPosType::MatchStart(x) =>{
-                                let before_match = Span::styled(
-                                    &t[current_position..x],
-                                    sty,
-                                );
+                            }
+                            SplitPosType::MatchStart(x) => {
+                                let before_match = Span::styled(&t[current_position..x], sty);
                                 spans.push(before_match);
                                 current_position = x;
                                 match_flag = true;
-                            },
+                            }
                             SplitPosType::MatchEnd(x) => {
-
-                                let actual_match_line =
-                                    Span::styled(&t[current_position..x], sty);
+                                let actual_match_line = Span::styled(&t[current_position..x], sty);
                                 spans.push(actual_match_line);
                                 current_position = x;
                                 match_flag = false;
-                            },
+                            }
                         }
                     }
                     ListItem::new(line)
@@ -370,14 +361,13 @@ fn draw_bottom_bar_normal(
 
             let filtered_count = app.result_list.get_filtered_matches_count();
             let filtered_str = if filtered_count != 0 {
-                format!(" (过滤掉{} 个)", filtered_count)
+                format!(" (过滤掉{filtered_count} 个)")
             } else {
                 String::default()
             };
 
             format!(
-                " {}个{},在{}个{}中{}.",
-                total_no_of_matches, matches_str, no_of_files, files_str, filtered_str
+                " {total_no_of_matches}个{matches_str},在{no_of_files}个{files_str}中{filtered_str}."
             )
         }
     });
@@ -396,8 +386,7 @@ fn draw_bottom_bar_normal(
     let selected_info_text = {
         let width = current_no_of_matches.to_string().len();
         format!(
-            " | {: >width$}/{} ",
-            current_match_index, current_no_of_matches
+            " | {current_match_index: >width$}/{current_no_of_matches} "
         )
     };
     let selected_info_length = selected_info_text.len();
@@ -440,91 +429,82 @@ fn draw_bottom_bar_normal(
     );
 }
 
-fn draw_help(
-    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-    area: Rect,
-) {
-    let block= Block::default()
+fn draw_help(frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
+    let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .title("帮助");
-    let block_l= Block::default()
+    let block_l = Block::default()
         .borders(Borders::RIGHT)
         .border_type(BorderType::Rounded)
         .title("按键");
-    let block_r= Block::default()
+    let block_r = Block::default()
         .border_type(BorderType::Rounded)
         .title("说明");
     frame.render_widget(Clear, area);
     let inner_area = block.inner(area);
     frame.render_widget(block, area);
 
-
     let vsplit = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints(
-            [
-                Constraint::Percentage(25),
-                Constraint::Percentage(75),
-            ]
-            .as_ref(),
-        )
+        .constraints([Constraint::Percentage(25), Constraint::Percentage(75)].as_ref())
         .split(inner_area);
 
-    let style1 = Style::default().add_modifier(Modifier::ITALIC).fg(Color::Green);
-    let style2 = Style::default().add_modifier(Modifier::BOLD).fg(Color::Yellow);
+    let style1 = Style::default()
+        .add_modifier(Modifier::ITALIC)
+        .fg(Color::Green);
+    let style2 = Style::default()
+        .add_modifier(Modifier::BOLD)
+        .fg(Color::Yellow);
 
     let l_help = vec![
-        help_item("h\\j\\k\\l",style1),
-        help_item("gg\\Shift+g",style1),
-        help_item("<num>g",style1),
-        help_item("+/-<num>g",style1),
-        help_item("dd\\df",style1),
-        help_item("F1\\z",style1),
-        help_item("F5",style1),
-        help_item("F2\\:",style1),
-        help_item("Enter",style1),
-        help_item(" |",style1),
-        help_item(" |",style1),
-        help_item("v/s",style1),
+        help_item("h\\j\\k\\l", style1),
+        help_item("gg\\Shift+g", style1),
+        help_item("<num>g", style1),
+        help_item("+/-<num>g", style1),
+        help_item("dd\\df", style1),
+        help_item("F1\\z", style1),
+        help_item("F5", style1),
+        help_item("F2\\:", style1),
+        help_item("Enter", style1),
+        help_item(" |", style1),
+        help_item(" |", style1),
+        help_item("v/s", style1),
     ];
 
     let r_help = vec![
-        help_item("上\\下\\上个文件\\下个文件导航",style2),
-        help_item("跳到开头\\跳到末尾",style2),
-        help_item("跳到指定<num>行数",style2),
-        help_item("跳到指定相对增加/减少<num>行数",style2),
-        help_item("删除当前行\\删除当前文件(只删除显示)",style2),
-        help_item("打开帮助",style2),
-        help_item("刷新",style2),
-        help_item("输入搜索条件",style2),
-        help_item("浏览模式下:打开当前行的文件",style2),
-        help_item("    默认用vim,--editor或者环境变量`$IGREP_EDITOR`或`$EDITOR`配置",style2),
-        help_item("输入模式下:搜索输入的条件",style2),
-        help_item("打开垂直\\水平预览窗口",style2),
+        help_item("上\\下\\上个文件\\下个文件导航", style2),
+        help_item("跳到开头\\跳到末尾", style2),
+        help_item("跳到指定<num>行数", style2),
+        help_item("跳到指定相对增加/减少<num>行数", style2),
+        help_item("删除当前行\\删除当前文件(只删除显示)", style2),
+        help_item("打开帮助", style2),
+        help_item("刷新", style2),
+        help_item("输入搜索条件", style2),
+        help_item("浏览模式下:打开当前行的文件", style2),
+        help_item(
+            "    默认用vim,--editor或者环境变量`$IGREP_EDITOR`或`$EDITOR`配置",
+            style2,
+        ),
+        help_item("输入模式下:搜索输入的条件", style2),
+        help_item("打开垂直\\水平预览窗口", style2),
     ];
 
+    let helpk1 = Paragraph::new(Text::from(l_help))
+        .alignment(Alignment::Left)
+        .block(block_l);
+    let helpv1 = Paragraph::new(Text::from(r_help))
+        .alignment(Alignment::Left)
+        .block(block_r);
 
-    let helpk1 = Paragraph::new(Text::from(l_help)).alignment(Alignment::Left).block(block_l);
-    let helpv1 = Paragraph::new(Text::from(r_help)).alignment(Alignment::Left).block(block_r);
-    
-
-
-    frame.render_widget(
-        helpk1,
-        vsplit[0],
-    );
-    frame.render_widget(
-        helpv1,
-        vsplit[1],
-    );
+    frame.render_widget(helpk1, vsplit[0]);
+    frame.render_widget(helpv1, vsplit[1]);
 }
 
-fn help_item<'a>(action:&'a str,sty:Style) -> Spans<'a> {
+fn help_item<'a>(action: &'a str, sty: Style) -> Spans<'a> {
     let ac_span = Span::styled(action, sty);
-    Spans::from(vec![ac_span]) 
+    Spans::from(vec![ac_span])
 }
-
 
 impl Application for App {
     fn is_searching(&self) -> bool {
@@ -611,11 +591,11 @@ impl Application for App {
         self.ig.update_cmd(cmd);
     }
 
-    fn jump_to(&mut self,line:usize) {
+    fn jump_to(&mut self, line: usize) {
         self.result_list.jump_to(line);
     }
 
-    fn jump_to_relative(&mut self,delta:i32) {
+    fn jump_to_relative(&mut self, delta: i32) {
         self.result_list.jump_to_relative(delta);
     }
 }
@@ -642,6 +622,6 @@ pub trait Application {
     fn on_show_help(&mut self);
     fn on_input_search(&mut self);
     fn on_to_normal(&mut self);
-    fn jump_to(&mut self,line:usize);
-    fn jump_to_relative(&mut self,delta:i32);
+    fn jump_to(&mut self, line: usize);
+    fn jump_to_relative(&mut self, delta: i32);
 }

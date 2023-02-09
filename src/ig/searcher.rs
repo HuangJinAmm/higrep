@@ -1,9 +1,5 @@
 use anyhow::Result;
-use std::{
-    borrow::BorrowMut,
-    cell::{Cell, RefCell},
-    sync::{mpsc, Arc, RwLock},
-};
+use std::sync::{mpsc, Arc, RwLock};
 
 use super::{sink::MatchesSink, SearchConfig};
 use crate::{file_entry::FileEntry, ui::cmd_parse::SearchCmd};

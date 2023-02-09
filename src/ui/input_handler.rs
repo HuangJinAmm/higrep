@@ -1,12 +1,12 @@
 use super::{app::Application, cmd_parse::SearchCmd};
 use anyhow::Result;
 use crossterm::event::{poll, read, Event, KeyCode, KeyEvent};
-use std::time::Duration;
 use lazy_static::lazy_static;
 use regex::Regex;
+use std::time::Duration;
 
 lazy_static! {
-    static ref JUMP_RE_G:Regex = Regex::new("^[-\\+]?\\d*g?").unwrap();
+    static ref JUMP_RE_G: Regex = Regex::new("^[-\\+]?\\d*g?").unwrap();
 }
 
 #[derive(Default)]
@@ -86,28 +86,36 @@ impl InputHandler {
                 "s" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
                     app.on_toggle_context_viewer_horizontal()
                 }),
-                "z" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_show_help()),
-                ":" => consume_buffer_and_execute(&mut self.input_buffer,&mut || app.on_input_search()),
+                "z" => {
+                    consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_show_help())
+                }
+                ":" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                    app.on_input_search()
+                }),
                 "q" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_exit()),
                 "g" => self.input_state = InputState::Incomplete("g…".into()),
                 "d" => self.input_state = InputState::Incomplete("d…".into()),
                 buf if JUMP_RE_G.is_match(buf) => {
-                    if !(buf=="-g" || buf == "+g" ) && buf.ends_with("g") {
-                        let line_str = &buf[0..buf.len()-1];
-                        if line_str.starts_with("-") || line_str.starts_with("+") {
-                            let line =i32::from_str_radix(line_str, 10).unwrap();
-                            consume_buffer_and_execute(&mut self.input_buffer,&mut || app.jump_to_relative(line));
+                    if !(buf == "-g" || buf == "+g") && buf.ends_with('g') {
+                        let line_str = &buf[0..buf.len() - 1];
+                        if line_str.starts_with('-') || line_str.starts_with('+') {
+                            let line = i32::from_str_radix(line_str, 10).unwrap();
+                            consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                                app.jump_to_relative(line)
+                            });
                         } else {
                             let line = usize::from_str_radix(line_str, 10).unwrap();
-                            consume_buffer_and_execute(&mut self.input_buffer,&mut || app.jump_to(line));
+                            consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                                app.jump_to(line)
+                            });
                         }
                     } else {
                         self.input_state = InputState::Invalid(buf.into());
-                        if buf.ends_with("g") {
+                        if buf.ends_with('g') {
                             self.input_buffer.clear();
                         }
                     }
-                },
+                }
                 buf => {
                     self.input_state = InputState::Invalid(buf.into());
                     self.input_buffer.clear();
@@ -120,13 +128,16 @@ impl InputHandler {
         if app.is_input_searching() {
             match key_code {
                 KeyCode::Enter => {
-                    // self.input_search_history.push(self.input_buffer.clone());
                     if let Some(cmd) = SearchCmd::parse(&self.input_buffer) {
                         app.update_cmd(cmd);
+                        self.input_search_history.push(self.input_buffer.clone());
+                        self.input_buffer.clear();
+                        self.input_state = InputState::Valid;
+                        app.on_search();
+                    } else {
+                        self.input_state = InputState::Invalid(self.input_buffer.clone());
+                        self.input_buffer.clear();
                     }
-                    self.input_buffer.clear();
-                    self.input_state = InputState::Valid;
-                    app.on_search();
                 }
                 KeyCode::Down => {
                     let history = self.input_search_history.next();

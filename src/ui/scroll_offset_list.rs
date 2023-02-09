@@ -150,7 +150,6 @@ impl<'a> StatefulWidget for List<'a> {
             return;
         }
 
-        
         let list_height = list_area.height as usize;
 
         let mut start = state.offset;

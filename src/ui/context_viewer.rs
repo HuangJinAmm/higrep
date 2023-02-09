@@ -126,8 +126,6 @@ impl ContextViewer {
             .map(Spans::from)
             .collect_vec();
 
-
-
         let match_offset = match_index - max(first_line_index, 1);
         let styled_line = &mut styled_spans[match_offset];
         let line_width = styled_line.width();
