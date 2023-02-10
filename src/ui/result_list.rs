@@ -35,6 +35,10 @@ impl ResultList {
         }
     }
 
+    pub fn entries(&self) -> &Vec<EntryType>{
+        self.entries.as_ref()
+    }
+
     pub fn iter(&self) -> std::slice::Iter<EntryType> {
         self.entries.iter()
     }

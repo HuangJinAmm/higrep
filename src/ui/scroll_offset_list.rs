@@ -8,18 +8,40 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
+const NUM_OF_SHOW:usize = 200;
+
 #[derive(Default, Debug, Clone)]
 pub struct ListState {
+    skip: usize,
     offset: usize,
     selected: Option<usize>,
 }
 
 impl ListState {
     pub fn select(&mut self, index: Option<usize>) {
-        self.selected = index;
-        if index.is_none() {
-            self.offset = 0;
+        let start = self.skip + 25;
+        let end = self.skip + NUM_OF_SHOW -25;
+        match index {
+            Some(i ) => {
+                if i < start || i > end {
+                    self.skip = i.checked_sub(100).unwrap_or(0);
+                }
+                self.selected = Some(i - self.skip); 
+            },
+            None => {
+                self.selected = None;
+                self.offset = 0;
+                self.skip = 0;
+            },
         }
+    }
+
+    pub fn get_skip(&self) -> usize {
+        self.skip
+    }
+
+    pub fn set_skip(&mut self,sk:usize) {
+        self.skip = sk
     }
 
     pub fn offset(&self) -> usize {
@@ -88,7 +110,7 @@ impl ScrollOffset {
 #[derive(Debug, Clone)]
 pub struct List<'a> {
     block: Option<Block<'a>>,
-    items: Vec<Option<ListItem<'a>>>,
+    items: Vec<ListItem<'a>>,
     /// Style used as a base style for the widget
     style: Style,
     start_corner: Corner,
@@ -102,7 +124,7 @@ pub struct List<'a> {
 impl<'a> List<'a> {
     pub fn new<T>(items: T) -> List<'a>
     where
-        T: Into<Vec<Option<ListItem<'a>>>>,
+        T: Into<Vec<ListItem<'a>>>,
     {
         List {
             block: None,
@@ -164,32 +186,29 @@ impl<'a> StatefulWidget for List<'a> {
         let mut end = state.offset;
         let mut height = 0;
         for item in self.items.iter().skip(state.offset) {
-            if item.is_none() {
-                return;
-            }
 
-            if height + item.as_ref().unwrap().height() > list_height {
+            if height + item.height() > list_height {
                 break;
             }
-            height += item.as_ref().unwrap().height();
+            height += item.height();
             end += 1;
         }
 
         let selected = state.selected.unwrap_or(0).min(self.items.len() - 1);
         while selected >= end {
-            height = height.saturating_add(self.items[end].as_ref().unwrap().height());
+            height = height.saturating_add(self.items[end].height());
             end += 1;
             while height > list_height {
-                height = height.saturating_sub(self.items[start].as_ref().unwrap().height());
+                height = height.saturating_sub(self.items[start].height());
                 start += 1;
             }
         }
         while selected < start {
             start -= 1;
-            height = height.saturating_add(self.items[start].as_ref().unwrap().height());
+            height = height.saturating_add(self.items[start].height());
             while height > list_height {
                 end -= 1;
-                height = height.saturating_sub(self.items[end].as_ref().unwrap().height());
+                height = height.saturating_sub(self.items[end].height());
             }
         }
         state.offset = start;
@@ -218,12 +237,12 @@ impl<'a> StatefulWidget for List<'a> {
         {
             let (x, y) = match self.start_corner {
                 Corner::BottomLeft => {
-                    current_height += item.as_ref().unwrap().height() as u16;
+                    current_height += item.height() as u16;
                     (list_area.left(), list_area.bottom() - current_height)
                 }
                 _ => {
                     let pos = (list_area.left(), list_area.top() + current_height);
-                    current_height += item.as_ref().unwrap().height() as u16;
+                    current_height += item.height() as u16;
                     pos
                 }
             };
@@ -231,9 +250,9 @@ impl<'a> StatefulWidget for List<'a> {
                 x,
                 y,
                 width: list_area.width,
-                height: item.as_ref().unwrap().height() as u16,
+                height: item.height() as u16,
             };
-            let item_style = self.style.patch(item.as_ref().unwrap().style);
+            let item_style = self.style.patch(item.style);
             buf.set_style(area, item_style);
 
             let is_selected = state.selected.map(|s| s == i).unwrap_or(false);
@@ -249,7 +268,7 @@ impl<'a> StatefulWidget for List<'a> {
                 x
             };
             let max_element_width = (list_area.width - (elem_x - x)) as usize;
-            for (j, line) in item.as_ref().unwrap().content.lines.iter().enumerate() {
+            for (j, line) in item.content.lines.iter().enumerate() {
                 buf.set_spans(elem_x, y + j as u16, line, max_element_width as u16);
             }
             if is_selected {

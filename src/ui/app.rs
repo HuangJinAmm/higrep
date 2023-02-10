@@ -157,74 +157,67 @@ impl App {
     }
 
     fn draw_list(frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect, app: &mut App) {
-        let offset = app.result_list_state.offset();
 
-        let skip = offset.min(offset.saturating_sub(10));
+        let skip = app.result_list_state.get_skip();
+        let entries = app.result_list.entries();
+        let end = entries.len().min(skip+200);
 
-        let files_list: Vec<Option<ListItem>> = app
-            .result_list
+        let files_list: Vec<ListItem> = entries[skip..end]
             .iter()
-            .take(skip + 100)
-            .enumerate()
-            .map(|e| {
-                if e.0 >= skip && e.0 < skip + 100 {
-                    match e.1 {
-                        EntryType::Header(h) => {
-                            let h = h.trim_start_matches("./");
-                            Some(ListItem::new(Span::styled(h, app.theme.file_path_color())))
-                        }
-                        EntryType::Match(n, t, offsets) => {
-                            let line_number =
-                                Span::styled(format!(" {n}: "), app.theme.line_number_color());
+            // .iter()
+            .map(|e| 
+                match e {
+                    EntryType::Header(h) => {
+                        let h = h.trim_start_matches("./");
+                        ListItem::new(Span::styled(h, app.theme.file_path_color()))
+                    }
+                    EntryType::Match(n, t, offsets) => {
+                        let line_number =
+                            Span::styled(format!(" {n}: "), app.theme.line_number_color());
 
-                            let mut line: Vec<Spans> = Vec::new();
+                        let mut line: Vec<Spans> = Vec::new();
 
-                            let max_width = area.width as usize;
-                            let mut current_position = 0;
-                            let soft_wrapper = SoftWrapper::new(max_width, offsets, t);
+                        let max_width = area.width as usize;
+                        let mut current_position = 0;
+                        let soft_wrapper = SoftWrapper::new(max_width, offsets, t);
 
-                            let mut match_flag = false;
-                            let mut spans = vec![line_number];
+                        let mut match_flag = false;
+                        let mut spans = vec![line_number];
 
-                            for split_pos in soft_wrapper.positions {
-                                let sty = if match_flag {
-                                    app.theme.match_color()
-                                } else {
-                                    app.theme.list_font_color()
-                                };
-                                match split_pos {
-                                    SplitPosType::Crlf(x) => {
-                                        let newline_span =
-                                            Span::styled(&t[current_position..x], sty);
-                                        spans.push(newline_span);
-                                        line.push(Spans::from(spans.clone()));
-                                        spans.clear();
-                                        current_position = x;
-                                    }
-                                    SplitPosType::MatchStart(x) => {
-                                        let before_match =
-                                            Span::styled(&t[current_position..x], sty);
-                                        spans.push(before_match);
-                                        current_position = x;
-                                        match_flag = true;
-                                    }
-                                    SplitPosType::MatchEnd(x) => {
-                                        let actual_match_line =
-                                            Span::styled(&t[current_position..x], sty);
-                                        spans.push(actual_match_line);
-                                        current_position = x;
-                                        match_flag = false;
-                                    }
+                        for split_pos in soft_wrapper.positions {
+                            let sty = if match_flag {
+                                app.theme.match_color()
+                            } else {
+                                app.theme.list_font_color()
+                            };
+                            match split_pos {
+                                SplitPosType::Crlf(x) => {
+                                    let newline_span =
+                                        Span::styled(&t[current_position..x], sty);
+                                    spans.push(newline_span);
+                                    line.push(Spans::from(spans.clone()));
+                                    spans.clear();
+                                    current_position = x;
+                                }
+                                SplitPosType::MatchStart(x) => {
+                                    let before_match =
+                                        Span::styled(&t[current_position..x], sty);
+                                    spans.push(before_match);
+                                    current_position = x;
+                                    match_flag = true;
+                                }
+                                SplitPosType::MatchEnd(x) => {
+                                    let actual_match_line =
+                                        Span::styled(&t[current_position..x], sty);
+                                    spans.push(actual_match_line);
+                                    current_position = x;
+                                    match_flag = false;
                                 }
                             }
-                            Some(ListItem::new(line))
                         }
-                    }
-                } else {
-                    None
+                        ListItem::new(line)
                 }
-            })
-            .collect();
+            }).collect();
 
         let list_widget = List::new(files_list)
             .block(
@@ -541,15 +534,12 @@ impl Application for App {
     }
 
     fn on_top(&mut self) {
-        self.result_list_state.select(None);
         self.result_list.top();
     }
 
     fn on_bottom(&mut self) {
-        let max = self.result_list.iter().count();
-        self.result_list_state.select(Some(max - 1));
-        self.result_list_state.set_offset(max - 200);
         self.result_list.bottom();
+        self.result_list_state.set_offset(0);           
     }
 
     fn on_remove_current_entry(&mut self) {
@@ -609,16 +599,10 @@ impl Application for App {
     }
 
     fn jump_to(&mut self, line: usize) {
-        self.result_list_state.select(Some(line));
-        self.result_list_state.set_offset(line - 10);
         self.result_list.jump_to(line);
     }
 
     fn jump_to_relative(&mut self, delta: i32) {
-        let selected = self.result_list.get_state().selected().unwrap_or(0) as i32;
-        let selected = selected.checked_add(delta).unwrap_or(0) as usize;
-        self.result_list_state.select(Some(selected));
-        self.result_list_state.set_offset(selected - 10);
         self.result_list.jump_to_relative(delta);
     }
 }
