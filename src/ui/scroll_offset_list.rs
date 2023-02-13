@@ -40,14 +40,6 @@ impl ListState {
         self.skip
     }
 
-    pub fn set_skip(&mut self,sk:usize) {
-        self.skip = sk
-    }
-
-    pub fn offset(&self) -> usize {
-        self.offset
-    }
-
     pub fn set_offset(&mut self, offset: usize) {
         self.offset = offset
     }

@@ -158,10 +158,12 @@ impl App {
 
     fn draw_list(frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect, app: &mut App) {
 
-        let skip = app.result_list_state.get_skip();
+        let mut skip = app.result_list_state.get_skip();
         let entries = app.result_list.entries();
         let end = entries.len().min(skip+200);
-
+        if skip > end {
+            skip = end
+        }
         let files_list: Vec<ListItem> = entries[skip..end]
             .iter()
             // .iter()
@@ -564,6 +566,8 @@ impl Application for App {
 
     fn on_search(&mut self) {
         self.bottom_bar_state = BottomBarState::Normal;
+        self.result_list = ResultList::default();
+        self.result_list_state = ListState::default();
         self.ig.search(&mut self.result_list);
     }
 
