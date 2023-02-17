@@ -297,10 +297,12 @@ impl ResultList {
                 for index in (0..=i).rev() {
                     match &self.entries[index] {
                         EntryType::Header(name) => {
-                            return Some((
-                                name.to_owned(),
-                                line_number.expect("Line number not specified"),
-                            ));
+                            if !name.starts_with("----") {
+                                return Some((
+                                    name.to_owned(),
+                                    line_number.expect("Line number not specified"),
+                                ));
+                            }
                         }
                         EntryType::Match(number, _, _) => {
                             if line_number.is_none() {

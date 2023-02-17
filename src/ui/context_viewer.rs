@@ -76,9 +76,8 @@ impl ContextViewer {
             let ss = SyntaxSet::load_defaults_newlines();
             let ts = highlighting::ThemeSet::load_defaults();
 
-            let mut highlighter =
-                HighlightFile::new(file_path, &ss, &ts.themes[theme.context_viewer_theme()])
-                    .unwrap();
+            let Ok(mut highlighter) =
+                HighlightFile::new(file_path, &ss, &ts.themes[theme.context_viewer_theme()]) else {return;};
             let mut line = String::new();
 
             while highlighter.reader.read_line(&mut line).unwrap() > 0 {
@@ -127,6 +126,11 @@ impl ContextViewer {
             .collect_vec();
 
         let match_offset = match_index - max(first_line_index, 1);
+
+        if styled_spans.is_empty() {
+            return styled_spans;
+        }
+
         let styled_line = &mut styled_spans[match_offset];
         let line_width = styled_line.width();
         let span_vec = &mut styled_line.0;

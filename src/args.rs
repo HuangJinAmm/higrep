@@ -20,45 +20,43 @@ pub const RIPGREP_CONFIG_PATH_ENV: &str = "RIPGREP_CONFIG_PATH";
                 .required(false)
 ))]
 pub struct Args {
-    /// Regular expression used for searching.
+    /// 搜索的条件/正则表达式 
     pub pattern: Option<String>,
-    /// File or directory to search. Directories are searched recursively.
-    /// If not specified, searching starts from current directory.
+    /// 指定搜索的路径,若未指定，则从当前路径开始
     pub path: Option<PathBuf>,
     #[clap(flatten)]
     pub editor: EditorOpt,
-    /// UI color theme.
+    /// UI 颜色主题.
     #[clap(long, arg_enum, default_value_t = ThemeVariant::Dark)]
     pub theme: ThemeVariant,
-    /// Searches case insensitively.
+    /// 搜索大小写敏感
     #[clap(short = 'i', long)]
     pub ignore_case: bool,
-    /// Searches case insensitively if the pattern is all lowercase.
-    /// Search case sensitively otherwise.
+    /// pattern 全小写的时候，大小写不敏感。其他情况按大小写敏感搜索.
     #[clap(short = 'S', long)]
     pub smart_case: bool,
-    /// Search hidden files and directories.
-    /// By default, hidden files and directories are skipped.
+    /// 是否搜索隐藏文件或文件夹.
+    /// 默认为false,不搜索。
     #[clap(short = '.', long = "hidden")]
     pub search_hidden: bool,
-    /// Include files and directories for searching that match the given glob.
-    /// Multiple globs may be provided.
+    ///  搜索指定格式的文件或文件夹。
+    /// 支持多个glob表达式
     #[clap(short, long)]
     pub glob: Vec<String>,
-    /// Show all supported file types and their corresponding globs.
+    /// 显示所有支持的文件类型及其对应的globs。
     #[clap(long)]
     pub type_list: bool,
-    /// Only search files matching TYPE. Multiple types may be provided.
+    /// 仅搜索与TYPE匹配的文件。可以输入多种类型。
     #[clap(short = 't', long = "type")]
     pub type_matching: Vec<String>,
-    /// Do not search files matching TYPE-NOT. Multiple types-not may be provided.
+    /// 搜索与TYPE不匹配的文件。可以输入多种类型。
     #[clap(short = 'T', long)]
     pub type_not: Vec<String>,
 }
 
 #[derive(Parser, Debug)]
 pub struct EditorOpt {
-    /// Text editor used to open selected match.
+    /// 用于打开当前选定行的文件的编辑器。默认 vim
     #[clap(long, arg_enum)]
     pub editor: Option<Editor>,
 }

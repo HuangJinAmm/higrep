@@ -1,12 +1,12 @@
 [package]
 name = "higrep"
 version = "1.3.0"
-authors = ["Konrad Szymoniak <szymoniak.konrad@gmail.com>","hjamm"]
+authors = ["Konrad Szymoniak <szymoniak.konrad@gmail.com>","黄金"]
 license = "MIT"
-description = "Interactive Grep"
-homepage = "https://github.com/konradsz/igrep"
-documentation = "https://github.com/konradsz/igrep"
-repository = "https://github.com/konradsz/igrep"
+description = "交互式grep"
+homepage = "https://github.com/HuangJinAmm/higrep"
+documentation = "https://github.com/HuangJinAmm/higrep"
+repository = "https://github.com/HuangJinAmm/higrep"
 keywords = ["cli", "tui", "grep"]
 categories = ["command-line-utilities"]
 edition = "2021"
@@ -16,7 +16,7 @@ name = "higrep"
 path = "src/main.rs"
 
 [dependencies]
-grep = "0.2.8"
+grep = "0.2.11"
 ignore = "0.4.18"
 clap = { version = "3.1.6", features = ["derive", "env"] }
 crossterm = "0.24.0"

@@ -48,7 +48,7 @@ impl SearchConfig {
             pattern,
             path,
             case_insensitive: false,
-            case_smart: false,
+            case_smart: true,
             overrides: Override::empty(),
             types,
             search_hidden: false,
