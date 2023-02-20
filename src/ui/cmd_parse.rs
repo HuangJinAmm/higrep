@@ -108,7 +108,7 @@ fn parse_ab(input: &str) -> Option<(usize, usize)> {
                 b = num.parse::<usize>().unwrap_or_default();
                 // b = usize::from_str_radix(num, 10).unwrap_or_default();
             }
-        } else { 
+        } else {
             a = mstr.parse::<usize>().unwrap_or_default();
             // a = usize::from_str_radix(mstr, 10).unwrap_or_default();
             b = a;

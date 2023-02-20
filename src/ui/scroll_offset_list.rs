@@ -8,7 +8,7 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-const NUM_OF_SHOW:usize = 200;
+const NUM_OF_SHOW: usize = 200;
 
 #[derive(Default, Debug, Clone)]
 pub struct ListState {
@@ -20,19 +20,19 @@ pub struct ListState {
 impl ListState {
     pub fn select(&mut self, index: Option<usize>) {
         let start = self.skip + 25;
-        let end = self.skip + NUM_OF_SHOW -25;
+        let end = self.skip + NUM_OF_SHOW - 25;
         match index {
-            Some(i ) => {
+            Some(i) => {
                 if i < start || i > end {
                     self.skip = i.checked_sub(100).unwrap_or(0);
                 }
-                self.selected = Some(i - self.skip); 
-            },
+                self.selected = Some(i - self.skip);
+            }
             None => {
                 self.selected = None;
                 self.offset = 0;
                 self.skip = 0;
-            },
+            }
         }
     }
 
@@ -178,7 +178,6 @@ impl<'a> StatefulWidget for List<'a> {
         let mut end = state.offset;
         let mut height = 0;
         for item in self.items.iter().skip(state.offset) {
-
             if height + item.height() > list_height {
                 break;
             }

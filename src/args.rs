@@ -20,7 +20,7 @@ pub const RIPGREP_CONFIG_PATH_ENV: &str = "RIPGREP_CONFIG_PATH";
                 .required(false)
 ))]
 pub struct Args {
-    /// 搜索的条件/正则表达式 
+    /// 搜索的条件/正则表达式
     pub pattern: Option<String>,
     /// 指定搜索的路径,若未指定，则从当前路径开始
     pub path: Option<PathBuf>,

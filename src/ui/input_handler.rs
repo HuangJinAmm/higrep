@@ -176,6 +176,7 @@ impl InputHandler {
                 }
                 KeyCode::F(5) => app.on_search(),
                 KeyCode::F(1) => app.on_show_help(),
+                KeyCode::F(3) => app.toggel_soft_warpper(),
                 KeyCode::F(2) => {
                     self.input_buffer.clear();
                     self.input_state = InputState::Incomplete(self.input_buffer.clone());

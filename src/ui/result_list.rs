@@ -1,3 +1,5 @@
+use regex::Regex;
+
 use crate::file_entry::{EntryType, FileEntry};
 use std::cmp;
 
@@ -35,7 +37,7 @@ impl ResultList {
         }
     }
 
-    pub fn entries(&self) -> &Vec<EntryType>{
+    pub fn entries(&self) -> &Vec<EntryType> {
         self.entries.as_ref()
     }
 
@@ -291,6 +293,7 @@ impl ResultList {
     }
 
     pub fn get_selected_entry(&self) -> Option<(String, u64)> {
+        let re = Regex::new("^\\d").unwrap();
         match self.state.selected() {
             Some(i) => {
                 let mut line_number: Option<u64> = None;
@@ -304,8 +307,8 @@ impl ResultList {
                                 ));
                             }
                         }
-                        EntryType::Match(number, _, _) => {
-                            if line_number.is_none() {
+                        EntryType::Match(number, row_text, _) => {
+                            if re.is_match(row_text) || line_number.is_none() {
                                 line_number = Some(*number);
                             }
                         }
@@ -357,6 +360,8 @@ impl ResultList {
 
 #[cfg(test)]
 mod tests {
+    use regex::Regex;
+
     use super::*;
 
     #[test]
@@ -367,5 +372,13 @@ mod tests {
         assert_eq!(list.state.selected(), None);
         list.previous_match();
         assert_eq!(list.state.selected(), None);
+    }
+
+    #[test]
+    fn test_row_text() {
+        let s ="1:dfasdf"; 
+        let re = Regex::new("^\\d").unwrap();
+        let res = re.is_match(s);
+        println!("{res}");
     }
 }

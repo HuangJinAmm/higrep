@@ -45,6 +45,7 @@ pub struct App {
     bottom_bar_state: BottomBarState,
     theme: Box<dyn Theme>,
     show_help: bool,
+    soft_warpper:bool,
 }
 
 impl App {
@@ -57,6 +58,7 @@ impl App {
             context_viewer_state: ContextViewerState::default(),
             theme,
             show_help: false,
+            soft_warpper: false,
         }
     }
 
@@ -160,29 +162,25 @@ impl App {
 
         let mut skip = app.result_list_state.get_skip();
         let entries = app.result_list.entries();
-        let end = entries.len().min(skip+200);
+        let end = entries.len().min(skip+220);
         if skip > end {
             skip = end
         }
-        let files_list: Vec<ListItem> = entries[skip..end]
-            .iter()
-            // .iter()
-            .map(|e| 
-                match e {
+        let mut files_list:Vec<ListItem> = Vec::new();
+
+        for e in &entries[skip..end] {
+            match e {
                     EntryType::Header(h) => {
-                        let h = h.trim_start_matches("./");
-                        ListItem::new(Span::styled(h, app.theme.file_path_color()))
-                    }
-                    EntryType::Match(n, t, offsets) => {
+                    let h = h.trim_start_matches("./");
+                    files_list.push(ListItem::new(Span::styled(h, app.theme.file_path_color())));
+                }
+                EntryType::Match(n, t, offsets) => {
+                    if app.soft_warpper {
                         let line_number =
                             Span::styled(format!(" {n}: "), app.theme.line_number_color());
-
-                        let mut line: Vec<Spans> = Vec::new();
-
                         let max_width = area.width as usize;
                         let mut current_position = 0;
                         let soft_wrapper = SoftWrapper::new(max_width, offsets, t);
-
                         let mut match_flag = false;
                         let mut spans = vec![line_number];
 
@@ -197,7 +195,7 @@ impl App {
                                     let newline_span =
                                         Span::styled(&t[current_position..x], sty);
                                     spans.push(newline_span);
-                                    line.push(Spans::from(spans.clone()));
+                                    files_list.push(ListItem::new(Spans::from(spans.clone())));
                                     spans.clear();
                                     current_position = x;
                                 }
@@ -217,9 +215,136 @@ impl App {
                                 }
                             }
                         }
-                        ListItem::new(line)
-                }
-            }).collect();
+                    } else {
+
+                        let line_number =
+                            Span::styled(format!(" {n}: "), app.theme.line_number_color());
+                        let mut spans = vec![line_number];
+    
+                        let mut current_position = 0;
+
+                        if let Some(offsets) = offsets {
+                            for offset in offsets {
+                                let before_match = Span::styled(
+                                    &t[current_position..offset.0],
+                                    app.theme.list_font_color(),
+                                );
+                                let actual_match =
+                                    Span::styled(&t[offset.0..offset.1], app.theme.match_color());
+        
+                                // set current position to the end of current match
+                                current_position = offset.1;
+        
+                                spans.push(before_match);
+                                spans.push(actual_match);
+                            }
+                        }
+    
+                        // push remaining text of a line
+                        spans.push(Span::styled(
+                            &t[current_position..],
+                            app.theme.list_font_color(),
+                        ));
+    
+                        files_list.push(ListItem::new(Spans::from(spans)));
+                    }
+
+            }                
+            } 
+        }
+
+
+
+        // let files_list: Vec<ListItem> = entries[skip..end]
+        //     .iter()
+        //     // .iter()
+        //     .map(|e| 
+        //         match e {
+        //             EntryType::Header(h) => {
+        //                 let h = h.trim_start_matches("./");
+        //                 ListItem::new(Span::styled(h, app.theme.file_path_color()))
+        //             }
+        //             EntryType::Match(n, t, offsets) => {
+
+        //                 if app.soft_warpper {
+        //                     let line_number =
+        //                         Span::styled(format!(" {n}: "), app.theme.line_number_color());
+        //                     let mut line: Vec<Spans> = Vec::new();
+
+        //                     let max_width = area.width as usize;
+        //                     let mut current_position = 0;
+        //                     let soft_wrapper = SoftWrapper::new(max_width, offsets, t);
+        //                     let mut match_flag = false;
+        //                     let mut spans = vec![line_number];
+
+        //                     for split_pos in soft_wrapper.positions {
+        //                         let sty = if match_flag {
+        //                             app.theme.match_color()
+        //                         } else {
+        //                             app.theme.list_font_color()
+        //                         };
+        //                         match split_pos {
+        //                             SplitPosType::Crlf(x) => {
+        //                                 let newline_span =
+        //                                     Span::styled(&t[current_position..x], sty);
+        //                                 spans.push(newline_span);
+        //                                 line.push(Spans::from(spans.clone()));
+        //                                 spans.clear();
+        //                                 current_position = x;
+        //                             }
+        //                             SplitPosType::MatchStart(x) => {
+        //                                 let before_match =
+        //                                     Span::styled(&t[current_position..x], sty);
+        //                                 spans.push(before_match);
+        //                                 current_position = x;
+        //                                 match_flag = true;
+        //                             }
+        //                             SplitPosType::MatchEnd(x) => {
+        //                                 let actual_match_line =
+        //                                     Span::styled(&t[current_position..x], sty);
+        //                                 spans.push(actual_match_line);
+        //                                 current_position = x;
+        //                                 match_flag = false;
+        //                             }
+        //                         }
+        //                     }
+        //                     ListItem::new(line)
+        //                 } else {
+    
+        //                     let line_number =
+        //                         Span::styled(format!(" {n}: "), app.theme.line_number_color());
+        //                     let mut spans = vec![line_number];
+        
+        //                     let mut current_position = 0;
+
+        //                     if let Some(offsets) = offsets {
+        //                         for offset in offsets {
+        //                             let before_match = Span::styled(
+        //                                 &t[current_position..offset.0],
+        //                                 app.theme.list_font_color(),
+        //                             );
+        //                             let actual_match =
+        //                                 Span::styled(&t[offset.0..offset.1], app.theme.match_color());
+            
+        //                             // set current position to the end of current match
+        //                             current_position = offset.1;
+            
+        //                             spans.push(before_match);
+        //                             spans.push(actual_match);
+        //                         }
+        //                     }
+        
+        //                     // push remaining text of a line
+        //                     spans.push(Span::styled(
+        //                         &t[current_position..],
+        //                         app.theme.list_font_color(),
+        //                     ));
+        
+        //                     ListItem::new(Spans::from(spans))
+        //                 }
+
+        //         }
+        //     }).collect();
 
         let list_widget = List::new(files_list)
             .block(
@@ -466,15 +591,17 @@ fn draw_help(frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
         .fg(Color::Yellow);
 
     let l_help = vec![
-        help_item("h\\j\\k\\l", style1),
-        help_item("gg\\Shift+g", style1),
+        help_item("h/j/k/l", style1),
+        help_item("gg/Shift+g", style1),
         help_item("<num>g", style1),
         help_item("+/-<num>g", style1),
-        help_item("dd\\df", style1),
-        help_item("F1\\z", style1),
+        help_item("dd/df", style1),
+        help_item("F1/z", style1),
         help_item("F5", style1),
-        help_item("F2\\:", style1),
+        help_item("F2/:", style1),
+        help_item("F3", style1),
         help_item("Enter", style1),
+        help_item(" |", style1),
         help_item(" |", style1),
         help_item(" |", style1),
         help_item("v/s", style1),
@@ -489,9 +616,14 @@ fn draw_help(frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
         help_item("打开帮助", style2),
         help_item("刷新", style2),
         help_item("输入搜索条件", style2),
+        help_item("打开/关闭换行", style2),
         help_item("浏览模式下:打开当前行的文件", style2),
         help_item(
-            "    默认用vim,--editor或者环境变量`$IGREP_EDITOR`或`$EDITOR`配置",
+            "默认用vim,通过--editor",
+            style2,
+        ),
+        help_item(
+            "或者环境变量`$IGREP_EDITOR`或`$EDITOR`配置",
             style2,
         ),
         help_item("输入模式下:搜索输入的条件", style2),
@@ -609,6 +741,10 @@ impl Application for App {
     fn jump_to_relative(&mut self, delta: i32) {
         self.result_list.jump_to_relative(delta);
     }
+
+    fn toggel_soft_warpper(&mut self) {
+        self.soft_warpper = ! self.soft_warpper;
+    }
 }
 
 #[cfg_attr(test, mockall::automock)]
@@ -635,4 +771,5 @@ pub trait Application {
     fn on_to_normal(&mut self);
     fn jump_to(&mut self, line: usize);
     fn jump_to_relative(&mut self, delta: i32);
+    fn toggel_soft_warpper(&mut self);
 }
