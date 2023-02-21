@@ -715,7 +715,9 @@ impl Application for App {
     }
 
     fn on_input_search(&mut self) {
-        self.bottom_bar_state = BottomBarState::Input;
+        if self.ig.is_idle() {
+            self.bottom_bar_state = BottomBarState::Input;
+        }
     }
 
     fn is_input_searching(&self) -> bool {
