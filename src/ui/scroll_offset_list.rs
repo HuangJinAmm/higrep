@@ -5,8 +5,9 @@ use ratatui::{
     text::Text,
     widgets::{Block, StatefulWidget, Widget},
 };
-use std::iter::Iterator;
+use std::{iter::Iterator };
 use unicode_width::UnicodeWidthStr;
+
 
 #[derive(Default, Debug, Copy, Clone)]
 pub struct ListState {

@@ -51,11 +51,11 @@ fn draw_app_status(
     theme: &dyn Theme,
 ) {
     let (app_status_text, app_status_style) = if ig.is_searching() {
-        ("SEARCHING", theme.searching_state_style())
+        ("搜索中..", theme.searching_state_style())
     } else if ig.last_error().is_some() {
-        ("ERROR", theme.error_state_style())
+        ("错误", theme.error_state_style())
     } else {
-        ("FINISHED", theme.finished_state_style())
+        ("完成", theme.finished_state_style())
     };
     let app_status = Span::styled(app_status_text, app_status_style);
 

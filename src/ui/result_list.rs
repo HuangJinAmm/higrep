@@ -6,7 +6,7 @@ use ratatui::{
     backend::CrosstermBackend,
     layout::Rect,
     style::Style,
-    text::{Line, Span},
+    text::{Span, Spans},
     widgets::{Block, BorderType, Borders},
     Frame,
 };

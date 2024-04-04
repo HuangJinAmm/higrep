@@ -43,7 +43,7 @@ impl SearchPopup {
         let block = Block::default()
             .borders(Borders::ALL)
             .border_style(theme.search_popup_border())
-            .title("Regex Pattern")
+            .title("搜索条件( pattern glob --a{n}b{n})")
             .title_alignment(Alignment::Center);
         let popup_area = Self::get_popup_area(frame.size(), 50);
         frame.render_widget(Clear, popup_area);
