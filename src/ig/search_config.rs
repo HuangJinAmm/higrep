@@ -5,6 +5,8 @@ use ignore::{
 };
 use std::path::PathBuf;
 
+use crate::ui::cmd_parse::SearchCmd;
+
 #[derive(Clone)]
 pub struct SearchConfig {
     pub pattern: String,
@@ -16,9 +18,28 @@ pub struct SearchConfig {
     pub search_hidden: bool,
     pub follow_links: bool,
     pub word_regexp: bool,
+    pub after_context: usize,
+    pub before_context: usize,
 }
 
 impl SearchConfig {
+    pub fn update_from(&mut self, cmd: SearchCmd) {
+        self.pattern = cmd.pattern;
+        if let Some(globs) = cmd.golb {
+            if !globs.is_empty() {
+                let mut builder = OverrideBuilder::new(std::env::current_dir().unwrap());
+                for glob in globs {
+                    let _ = builder.add(&glob);
+                }
+                if let Ok(ov) = builder.build() {
+                    self.overrides = ov;
+                }
+            }
+        }
+        self.after_context = cmd.after_context;
+        self.before_context = cmd.before_context;
+    }
+
     pub fn from(pattern: String, paths: Vec<PathBuf>) -> Result<Self> {
         let mut builder = TypesBuilder::new();
         builder.add_defaults();
@@ -34,6 +55,8 @@ impl SearchConfig {
             search_hidden: false,
             follow_links: false,
             word_regexp: false,
+            after_context: 0,
+            before_context: 0,
         })
     }
 

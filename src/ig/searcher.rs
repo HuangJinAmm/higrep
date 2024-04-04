@@ -42,6 +42,8 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
         .binary_detection(BinaryDetection::quit(b'\x00'))
         .line_terminator(LineTerminator::byte(b'\n'))
         .line_number(true)
+        .after_context(config.after_context)
+        .before_context(config.before_context)
         .multi_line(false)
         .build();
 

@@ -60,12 +60,14 @@ NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSus
 | `Up`,`k`                 | Select previous match                  |
 | `Right`, `l`, `PageDown` | Select match in next file              |
 | `Left`, `h`, `PageUp`    | Select match in previous file          |
+| `=[+/-]{n}g`             | Jump to the Line {N} match             |
 | `gg`, `Home`             | Jump to the first match                |
 | `Shift-g`, `End`         | Jump to the last match                 |
 | `Enter`                  | Open current file                      |
 | `dd`, `Delete`           | Filter out selected match              |
 | `dw`                     | Filter out all matches in current file |
 | `v`                      | Toggle vertical context viewer         |
+| `p`                      | Toggle text wrapper                    |
 | `s`                      | Toggle horizontal context viewer       |
 | `+`                      | Increase context viewer size           |
 | `-`                      | Decrease context viewer size           |

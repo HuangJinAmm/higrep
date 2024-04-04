@@ -2,9 +2,7 @@ use crate::{
     editor::EditorCommand,
     ig::{Ig, SearchConfig},
     ui::{
-        bottom_bar, context_viewer::ContextViewer, input_handler::InputHandler,
-        keymap_popup::KeymapPopup, result_list::ResultList, search_popup::SearchPopup,
-        theme::Theme,
+        bottom_bar, cmd_parse::SearchCmd, context_viewer::ContextViewer, input_handler::InputHandler, keymap_popup::KeymapPopup, result_list::ResultList, search_popup::SearchPopup, theme::Theme
     },
 };
 use anyhow::Result;
@@ -192,7 +190,11 @@ impl Application for App {
 
     fn on_search(&mut self) {
         let pattern = self.search_popup.get_pattern();
-        self.search_config.pattern = pattern;
+        if let Some(cmd) = SearchCmd::parse(&pattern) {
+            self.search_config.update_from(cmd);
+        } else {
+            self.search_config.pattern = pattern;
+        }
         self.ig
             .search(self.search_config.clone(), &mut self.result_list);
     }
