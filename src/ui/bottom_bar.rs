@@ -31,7 +31,7 @@ pub fn draw(
             [
                 Constraint::Length(12),
                 Constraint::Min(1),
-                Constraint::Length(2),
+                Constraint::Length(10),
                 Constraint::Length(selected_info_text.len() as u16),
             ]
             .as_ref(),

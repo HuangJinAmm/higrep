@@ -1,3 +1,5 @@
+use regex::Regex;
+
 use std::cmp;
 
 use ratatui::{
@@ -37,12 +39,73 @@ impl ResultList {
         }
     }
 
+    pub fn entries(&self) -> &Vec<EntryType> {
+        self.entries.as_ref()
+    }
+
     pub fn iter(&self) -> std::slice::Iter<EntryType> {
         self.entries.iter()
     }
 
     pub fn is_empty(&self) -> bool {
         self.entries.is_empty()
+    }
+
+    pub fn jump_to(&mut self, line: usize) {
+        if self.is_empty() {
+            return;
+        }
+        let max = self.entries.len();
+        let current = self.state.selected().unwrap_or(0);
+        let jump_line = if line < max {
+            match self.entries[line] {
+                EntryType::Header(_) => line + 1,
+                EntryType::Match(_, _, _) => line,
+            }
+        } else {
+            max
+        };
+        if max - jump_line < 100 {
+            self.state.offset(max - 100);
+        } else if jump_line.abs_diff(current) > 100 {
+            self.state.offset(jump_line);
+        }
+        self.state.select(Some(jump_line))
+    }
+
+    pub fn jump_to_relative(&mut self, delta: i32) {
+        if self.is_empty() {
+            return;
+        }
+        let current = self.state.selected().unwrap_or(0);
+        let max = self.entries.len();
+        let index = match self.state.selected() {
+            Some(i) => {
+                let current = i as i32;
+                let max = self.entries.len() - 1;
+                if (current + delta) > max as i32 {
+                    max
+                } else if (current + delta) < 1 {
+                    1
+                } else {
+                    let jump_to = delta + i as i32;
+                    let jump_real = match self.entries[jump_to as usize] {
+                        EntryType::Header(_) => jump_to + 1,
+                        EntryType::Match(_, _, _) => jump_to,
+                    };
+                    jump_real as usize
+                }
+            }
+            None => 1,
+        };
+
+        if max - index < 100 {
+            self.state.offset(max - 100);
+        } else if index.abs_diff(current) > 100 {
+            self.state.offset(index);
+        }
+        self.state.select(Some(index));
+        
     }
 
     pub fn next_match(&mut self) {
@@ -246,19 +309,22 @@ impl ResultList {
     }
 
     pub fn get_selected_entry(&self) -> Option<(String, u64)> {
+        let re = Regex::new("^\\d").unwrap();
         match self.state.selected() {
             Some(i) => {
                 let mut line_number: Option<u64> = None;
                 for index in (0..=i).rev() {
                     match &self.entries[index] {
                         EntryType::Header(name) => {
-                            return Some((
-                                name.to_owned(),
-                                line_number.expect("Line number not specified"),
-                            ));
+                            if !name.starts_with("----") {
+                                return Some((
+                                    name.to_owned(),
+                                    line_number.expect("Line number not specified"),
+                                ));
+                            }
                         }
-                        EntryType::Match(number, _, _) => {
-                            if line_number.is_none() {
+                        EntryType::Match(number, row_text, _) => {
+                            if re.is_match(row_text) || line_number.is_none() {
                                 line_number = Some(*number);
                             }
                         }

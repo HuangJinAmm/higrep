@@ -234,10 +234,24 @@ impl Application for App {
     fn on_keymap_right(&mut self) {
         self.keymap_popup.go_right();
     }
+    
+    fn on_text_wrapper(&mut self) {
+        self.result_list.toggel_text_wrapper();
+    }
+
+    fn jump_to(&mut self, line: usize) {
+        self.result_list.jump_to(line);
+    }
+
+    fn jump_to_relative(&mut self, delta: i32) {
+        self.result_list.jump_to_relative(delta);
+    }
 }
 
 #[cfg_attr(test, mockall::automock)]
 pub trait Application {
+    fn jump_to_relative(&mut self, delta: i32);
+    fn jump_to(&mut self, line: usize) ;
     fn is_searching(&self) -> bool;
     fn on_next_match(&mut self);
     fn on_previous_match(&mut self);

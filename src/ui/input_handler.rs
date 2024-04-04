@@ -1,8 +1,13 @@
 use anyhow::Result;
 use crossterm::event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers};
+use lazy_static::lazy_static;
+use regex::Regex;
 use std::time::Duration;
 
 use crate::app::Application;
+lazy_static! {
+    static ref JUMP_RE_G: Regex = Regex::new("^=[-\\+]?\\d*g?").unwrap();
+}
 
 #[derive(Default)]
 pub struct InputHandler {
@@ -195,6 +200,29 @@ impl InputHandler {
             }
             "g" => self.input_state = InputState::Incomplete("g…".into()),
             "d" => self.input_state = InputState::Incomplete("d…".into()),
+            buf if JUMP_RE_G.is_match(buf) => {
+                if !(buf == "=-g" || buf == "=+g") && buf.ends_with('g') {
+                    let line_str = &buf[1..buf.len() - 1];
+                    if line_str.starts_with('-') || line_str.starts_with('+') {
+                        // let line = i32::from_str_radix(line_str, 10).unwrap();
+                        let line = line_str.parse::<i32>().unwrap();
+                        consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                            app.jump_to_relative(line)
+                        });
+                    } else {
+                        let line = line_str.parse::<usize>().unwrap();
+                        // let line = usize::from_str_radix(line_str, 10).unwrap();
+                        consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                            app.jump_to(line)
+                        });
+                    }
+                } else {
+                    self.input_state = InputState::Invalid(buf.into());
+                    if buf.ends_with('g') {
+                        self.input_buffer.clear();
+                    }
+                }
+            }
             buf => {
                 self.input_state = InputState::Invalid(buf.into());
                 self.input_buffer.clear();

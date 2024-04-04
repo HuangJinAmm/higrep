@@ -397,6 +397,7 @@ dependencies = [
  "lazy_static",
  "mockall",
  "ratatui",
+ "regex",
  "strum",
  "strum_macros",
  "syntect",
