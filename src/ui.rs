@@ -5,5 +5,6 @@ pub mod keymap_popup;
 pub mod result_list;
 pub mod search_popup;
 pub mod theme;
+pub mod soft_warp;
 
 mod scroll_offset_list;
