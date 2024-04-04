@@ -1,5 +1,5 @@
 use anyhow::Result;
-use igrep::{
+use higrep::{
     app::App,
     args::Args,
     editor::EditorCommand,

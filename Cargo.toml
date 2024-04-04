@@ -1,7 +1,7 @@
 [package]
-name = "igrep"
+name = "higrep"
 version = "1.2.0"
-authors = ["Konrad Szymoniak <szymoniak.konrad@gmail.com>"]
+authors = ["Konrad Szymoniak <szymoniak.konrad@gmail.com>","HuangjinAmm"]
 license = "MIT"
 description = "Interactive Grep"
 homepage = "https://github.com/konradsz/igrep"
@@ -12,7 +12,7 @@ categories = ["command-line-utilities"]
 edition = "2021"
 
 [[bin]]
-name = "ig"
+name = "hig"
 path = "src/main.rs"
 
 [dependencies]
