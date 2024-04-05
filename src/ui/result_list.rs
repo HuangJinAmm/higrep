@@ -6,7 +6,7 @@ use ratatui::{
     backend::CrosstermBackend,
     layout::Rect,
     style::Style,
-    text::{Span, Spans},
+    text::{Line, Span },
     widgets::{Block, BorderType, Borders},
     Frame,
 };
@@ -14,7 +14,9 @@ use ratatui::{
 use crate::ig::file_entry::{EntryType, FileEntry};
 
 use super::{
-    scroll_offset_list::{List, ListItem, ListState, ScrollOffset}, soft_warp::{SoftWrapper, SplitPosType}, theme::Theme
+    scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
+    soft_warp::{SoftWrapper, SplitPosType},
+    theme::Theme,
 };
 
 #[derive(Default)]
@@ -107,7 +109,6 @@ impl ResultList {
             self.state.offset(index);
         }
         self.state.select(Some(index));
-        
     }
 
     pub fn next_match(&mut self) {
@@ -235,7 +236,7 @@ impl ResultList {
         }
 
         self.state.select(Some(self.entries.len() - 1));
-        self.state.offset(self.entries.len() - 100 );
+        self.state.offset(self.entries.len() - 100);
     }
 
     pub fn remove_current_entry(&mut self) {
@@ -378,9 +379,9 @@ impl ResultList {
         area: Rect,
         theme: &dyn Theme,
     ) {
-        let mut files_list : Vec<ListItem>= Vec::new();
+        let mut files_list: Vec<ListItem> = Vec::new();
         let skip = self.state.get_offset();
-        let end = self.entries.len().min(skip+60);
+        let end = self.entries.len().min(skip + 60);
 
         for e in &self.entries[skip..end] {
             match e {
@@ -391,7 +392,7 @@ impl ResultList {
                 EntryType::Match(n, t, offsets) => {
                     if self.state.is_wrapper() {
                         let line_number =
-                            Span::styled(format!(" {n}: "),theme.line_number_color());
+                            Span::styled(format!(" {n}: "), theme.line_number_color());
                         let max_width = area.width as usize;
                         let mut current_position = 0;
                         let soft_wrapper = SoftWrapper::new(max_width, offsets, t);
@@ -406,16 +407,14 @@ impl ResultList {
                             };
                             match split_pos {
                                 SplitPosType::Crlf(x) => {
-                                    let newline_span =
-                                        Span::styled(&t[current_position..x], sty);
+                                    let newline_span = Span::styled(&t[current_position..x], sty);
                                     spans.push(newline_span);
-                                    files_list.push(ListItem::new(Spans::from(spans.clone())));
+                                    files_list.push(ListItem::new(Line::from(spans.clone())));
                                     spans.clear();
                                     current_position = x;
                                 }
                                 SplitPosType::MatchStart(x) => {
-                                    let before_match =
-                                        Span::styled(&t[current_position..x], sty);
+                                    let before_match = Span::styled(&t[current_position..x], sty);
                                     spans.push(before_match);
                                     current_position = x;
                                     match_flag = true;
@@ -430,11 +429,10 @@ impl ResultList {
                             }
                         }
                     } else {
-
                         let line_number =
                             Span::styled(format!(" {n}: "), theme.line_number_color());
                         let mut spans = vec![line_number];
-    
+
                         let mut current_position = 0;
 
                         for offset in offsets {
@@ -443,26 +441,25 @@ impl ResultList {
                                 theme.list_font_color(),
                             );
                             let actual_match =
-                                Span::styled(&t[offset.0..offset.1],theme.match_color());
-    
+                                Span::styled(&t[offset.0..offset.1], theme.match_color());
+
                             // set current position to the end of current match
                             current_position = offset.1;
-    
+
                             spans.push(before_match);
                             spans.push(actual_match);
                         }
-    
+
                         // push remaining text of a line
                         spans.push(Span::styled(
                             &t[current_position..],
                             theme.list_font_color(),
                         ));
-    
-                        files_list.push(ListItem::new(Spans::from(spans)));
-                    }
 
-            }                
-            } 
+                        files_list.push(ListItem::new(Line::from(spans)));
+                    }
+                }
+            }
         }
 
         let list_widget = List::new(files_list)

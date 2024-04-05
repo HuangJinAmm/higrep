@@ -185,9 +185,9 @@ impl InputHandler {
             "v" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
                 app.on_toggle_context_viewer_vertical()
             }),
-            "p" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
-                app.on_text_wrapper()
-            }),
+            "p" => {
+                consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_text_wrapper())
+            }
             "s" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
                 app.on_toggle_context_viewer_horizontal()
             }),

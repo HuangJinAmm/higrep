@@ -2,7 +2,9 @@ use crate::{
     editor::EditorCommand,
     ig::{Ig, SearchConfig},
     ui::{
-        bottom_bar, cmd_parse::SearchCmd, context_viewer::ContextViewer, input_handler::InputHandler, keymap_popup::KeymapPopup, result_list::ResultList, search_popup::SearchPopup, theme::Theme
+        bottom_bar, cmd_parse::SearchCmd, context_viewer::ContextViewer,
+        input_handler::InputHandler, keymap_popup::KeymapPopup, result_list::ResultList,
+        search_popup::SearchPopup, theme::Theme,
     },
 };
 use anyhow::Result;
@@ -236,7 +238,7 @@ impl Application for App {
     fn on_keymap_right(&mut self) {
         self.keymap_popup.go_right();
     }
-    
+
     fn on_text_wrapper(&mut self) {
         self.result_list.toggel_text_wrapper();
     }
@@ -253,7 +255,7 @@ impl Application for App {
 #[cfg_attr(test, mockall::automock)]
 pub trait Application {
     fn jump_to_relative(&mut self, delta: i32);
-    fn jump_to(&mut self, line: usize) ;
+    fn jump_to(&mut self, line: usize);
     fn is_searching(&self) -> bool;
     fn on_next_match(&mut self);
     fn on_previous_match(&mut self);

@@ -22,18 +22,22 @@ impl SearchCmd {
             let caps;
             if cmd.starts_with('\"') {
                 if CMD_RE_Q.is_match(cmd) {
-                    let Some(caps_re) = CMD_RE_Q.captures(cmd) else {return None};
+                    let Some(caps_re) = CMD_RE_Q.captures(cmd) else {
+                        return None;
+                    };
                     caps = caps_re;
                 } else {
                     return None;
                 }
             } else if CMD_RE.is_match(cmd) {
-                let Some(caps_re) = CMD_RE.captures(cmd) else {return None};
+                let Some(caps_re) = CMD_RE.captures(cmd) else {
+                    return None;
+                };
                 caps = caps_re;
             } else {
                 return None;
             }
-            let Some(pat) = caps.get(1) else {return None};
+            let pat = caps.get(1)?;
             let mut glob_vec = None;
             if let Some(glob) = caps.get(2) {
                 glob_vec = Some(Vec::new());

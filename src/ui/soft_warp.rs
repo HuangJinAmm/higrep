@@ -1,6 +1,6 @@
 use unicode_width::UnicodeWidthChar;
 
-#[derive(Debug, PartialEq, Eq, Ord)]
+#[derive(Debug, PartialEq, Eq )]
 pub enum SplitPosType {
     Crlf(usize),
     MatchStart(usize),
@@ -28,11 +28,7 @@ pub struct SoftWrapper {
 }
 
 impl SoftWrapper {
-    pub fn new(
-        max_width: usize,
-        matches_offsets: &Vec<(usize, usize)>,
-        text: &String,
-    ) -> Self {
+    pub fn new(max_width: usize, matches_offsets: &Vec<(usize, usize)>, text: &str) -> Self {
         let mut positions = Vec::new();
         if text.is_empty() {
             return Self { positions };
