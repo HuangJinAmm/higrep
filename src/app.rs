@@ -261,6 +261,7 @@ pub trait Application {
     fn on_previous_file(&mut self);
     fn on_top(&mut self);
     fn on_bottom(&mut self);
+    fn on_text_wrapper(&mut self);
     fn on_remove_current_entry(&mut self);
     fn on_remove_current_file(&mut self);
     fn on_toggle_context_viewer_vertical(&mut self);

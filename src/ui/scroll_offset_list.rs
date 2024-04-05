@@ -5,12 +5,13 @@ use ratatui::{
     text::Text,
     widgets::{Block, StatefulWidget, Widget},
 };
-use std::{iter::Iterator };
+use std::{{iter::Iterator }, ops::Sub};
 use unicode_width::UnicodeWidthStr;
 
 
 #[derive(Default, Debug, Copy, Clone)]
 pub struct ListState {
+    soft_wrapper: bool,
     offset: usize,
     selected: Option<usize>,
 }
@@ -21,6 +22,21 @@ impl ListState {
         if index.is_none() {
             self.offset = 0;
         }
+    }
+    pub fn get_offset(&self) -> usize {
+        self.offset
+    }
+
+    pub fn offset(&mut self, offset: usize) {
+        self.offset = offset;
+    }
+
+    pub fn is_wrapper(&self) -> bool {
+        self.soft_wrapper
+    }
+
+    pub fn toggel_wrapper(&mut self) {
+        self.soft_wrapper = !self.soft_wrapper;
     }
 
     pub fn selected(&self) -> Option<usize> {
@@ -142,10 +158,12 @@ impl<'a> StatefulWidget for List<'a> {
         }
         let list_height = list_area.height as usize;
 
-        let mut start = state.offset;
-        let mut end = state.offset;
+        let mut start = 0; 
+        let mut end = 0;
         let mut height = 0;
-        for item in self.items.iter().skip(state.offset) {
+        for item in self.items.iter()
+        // .skip(state.offset) 
+        {
             if height + item.height() > list_height {
                 break;
             }
@@ -153,7 +171,7 @@ impl<'a> StatefulWidget for List<'a> {
             end += 1;
         }
 
-        let selected = state.selected.unwrap_or(0).min(self.items.len() - 1);
+        let selected = state.selected.unwrap_or(0).saturating_sub(state.offset).min(self.items.len() - 1);
         while selected >= end {
             height = height.saturating_add(self.items[end].height());
             end += 1;
@@ -170,13 +188,13 @@ impl<'a> StatefulWidget for List<'a> {
                 height = height.saturating_sub(self.items[end].height());
             }
         }
-        state.offset = start;
+        state.offset += start;
 
-        if selected - state.offset < self.scroll_offset.top {
+        if selected - start < self.scroll_offset.top {
             state.offset = state.offset.saturating_sub(1);
         }
 
-        if selected >= list_height + state.offset - self.scroll_offset.bottom
+        if selected >= list_height - self.scroll_offset.bottom
             && selected < height - self.scroll_offset.bottom
         {
             state.offset += 1;
@@ -191,7 +209,7 @@ impl<'a> StatefulWidget for List<'a> {
             .items
             .iter_mut()
             .enumerate()
-            .skip(state.offset)
+            // .skip(state.offset)
             .take(end - start)
         {
             let (x, y) = match self.start_corner {
@@ -214,7 +232,7 @@ impl<'a> StatefulWidget for List<'a> {
             let item_style = self.style.patch(item.style);
             buf.set_style(area, item_style);
 
-            let is_selected = state.selected.map(|s| s == i).unwrap_or(false);
+            let is_selected = state.selected.map(|s| s == i + state.offset).unwrap_or(false);
             let elem_x = if has_selection {
                 let symbol = if is_selected {
                     highlight_symbol
