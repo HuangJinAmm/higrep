@@ -1,6 +1,6 @@
 use unicode_width::UnicodeWidthChar;
 
-#[derive(Debug, PartialEq, Eq )]
+#[derive(Debug, PartialEq, Eq , Ord)]
 pub enum SplitPosType {
     Crlf(usize),
     MatchStart(usize),
